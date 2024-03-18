@@ -1,5 +1,8 @@
-datasets/
+
 __pycache__/
 result/
 *.so
 temp/
+
+cifar-10-batches-py/
+MNIST/
