@@ -29,9 +29,8 @@ class PAIBoard_Ethernet(PAIBoard):
         configFrames = np.fromfile(configPath, dtype="<u8")
         print("----------------------------------")
         print("----------PAICORE CONFIG----------")
-        tcpCliSock = Ethernet_config(self.addr)
-        Ethernet_send(tcpCliSock, "CONFIG", configFrames, self.buffer_num)
-        tcpCliSock.close()
+        self.tcpCliSock = Ethernet_config(self.addr)
+        Ethernet_send(self.tcpCliSock, "CONFIG", configFrames, self.buffer_num)
         print("----------------------------------")
 
     def inference(self, initFrames, inputFrames):
@@ -39,10 +38,11 @@ class PAIBoard_Ethernet(PAIBoard):
         workFrames = np.concatenate((initFrames, inputFrames))
         # workFrames = inputFrames
 
-        tcpCliSock = Ethernet_config(self.addr)
-        Ethernet_send(tcpCliSock, "WORK", workFrames, self.buffer_num)
-        outputFrames =  Ethernet_recv(tcpCliSock, self.buffer_num)
-        tcpCliSock.close()
-
+        Ethernet_send(self.tcpCliSock, "WORK", workFrames, self.buffer_num)
+        outputFrames =  Ethernet_recv(self.tcpCliSock, self.buffer_num)
 
         return outputFrames
+
+    def __del__(self):
+        Ethernet_send(self.tcpCliSock, "QUIT", 0, self.buffer_num)
+        self.tcpCliSock.close()
