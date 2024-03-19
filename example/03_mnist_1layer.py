@@ -2,22 +2,25 @@ import __init__
 
 import numpy as np
 import time
+import os
 
 import example.datasets.load_mnist as load_mnist
 from example.Encoder.encoder import PoissonEncoder
 
-from paiboard.pcie.paiboard_pcie import PAIBoard_PCIe
+# from paiboard.pcie.paiboard_pcie import PAIBoard_PCIe
 from paiboard.simulator.paiboard_sim import PAIBoard_SIM
+from paiboard.ethernet.paiboard_ethernet import PAIBoard_Ethernet
 
 if __name__ == "__main__":
     timestep = 8
     layer_num = 0
     baseDir = "./result/03_mnist_1layer/"
-    snn = PAIBoard_PCIe(baseDir, timestep, layer_num=layer_num)
+    # snn = PAIBoard_PCIe(baseDir, timestep, layer_num=layer_num)
     # snn = PAIBoard_SIM(baseDir, timestep, layer_num=layer_num)
+    snn = PAIBoard_Ethernet(baseDir, timestep, layer_num=layer_num)
     snn.config(oFrmNum=20)
 
-    dataset_root = "./example/datasets/MNIST/raw"
+    dataset_root = os.path.join(os.path.expanduser('~'), "work/99_datasets/MNIST/raw")
     testdata, testlabels = load_mnist.CreatData(dataset_root)
     classes = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
     print()

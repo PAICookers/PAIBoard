@@ -44,4 +44,5 @@ class PAIBoard_Ethernet(PAIBoard):
         outputFrames =  Ethernet_recv(tcpCliSock, self.buffer_num)
         tcpCliSock.close()
 
+
         return outputFrames

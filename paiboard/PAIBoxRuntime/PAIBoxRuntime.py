@@ -5,7 +5,7 @@ from numpy.typing import NDArray
 import json
 
 from paicorelib import Coord, CoordLike, RIdLike, to_coordoffset
-from paicorelib.framelib._types import ArrayType, DataArrayType, FrameArrayType
+from paicorelib.framelib.types import ArrayType, DataArrayType, FrameArrayType
 from paicorelib.framelib.frame_defs import FrameHeader as FH, SpikeFrameFormat as SFF
 from paicorelib.framelib.frame_gen import OfflineFrameGen
 from paicorelib.framelib.frames import OfflineWorkFrame1
