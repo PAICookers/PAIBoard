@@ -1,8 +1,8 @@
 import binascii,time
-import serial
 
 def serialConfig(globalSignalDelay = 92):
-    
+    import serial
+
     ser = serial.Serial("/dev/ttyUSB0", 9600)
     if ser.isOpen():                        # 判断串口是否成功打开
         print("[Info]  : Serial Open.")

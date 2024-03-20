@@ -2,13 +2,12 @@ import numpy as np
 
 from paiboard.dma.base import DMA_base 
 
-from paiboard.pcie.example import pcie_init,read_bypass,write_bypass
-from paiboard.pcie.example import send_dma_np, read_dma_np
-
 class DMA_PCIe(DMA_base):
     def __init__(self, oen: int, channel_mask: int) -> None:
         super().__init__()
 
+        from paiboard.pcie.example import pcie_init,read_bypass,write_bypass
+        from paiboard.pcie.example import send_dma_np, read_dma_np
         if(pcie_init() < 0):
             print("pcie_init error")
 
