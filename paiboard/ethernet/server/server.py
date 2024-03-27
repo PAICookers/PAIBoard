@@ -113,59 +113,81 @@ print('Wating...')
 tcpCliSock, addr = tcpSerSock.accept()
 print('Connected')
 
+res = np.array([], dtype=np.uint64)
+
 while True:
 
     header_get = False
-
+    
+    
     while True:
-        recv_buffer = tcpCliSock.recv(buff_size)
-        if len(recv_buffer) == 0:
-            pass
-        else:
+        if len(res) == 0:
+            recv_buffer = tcpCliSock.recv(buff_size)
+            while len(recv_buffer) == 0:
+                recv_buffer = tcpCliSock.recv(buff_size)
             while len(recv_buffer)%buff_size != 0:
-                print("Incompleted Package!")
+#                 print("Incompleted Package!")
                 tmp_buffer = tcpCliSock.recv(buff_size)
                 recv_buffer = recv_buffer + tmp_buffer
             recv_data = np.frombuffer(recv_buffer, dtype='uint64')
-            if not header_get:
-                if recv_data[0] == 0:
-                    work_mode = "CONFIG"
-                    print("Config mode")
-                elif recv_data[0] == 1:
-                    work_mode = "WORK"
-                elif recv_data[0] == 2:
-                    work_mode = "QUIT"
-                    break
+            if len(recv_data) != int(buff_size/8):
+                res = recv_data[int(buff_size/8):]
+                recv_data = recv_data[0:int(buff_size/8)]
+                print("res",len(res))
+        else:
+            recv_data = res[0:int(buff_size/8)]
+            res = res[int(buff_size/8):]
+            print("res",len(res))
+        if not header_get:
+            if recv_data[0] == 0:
+                work_mode = "SEND"
+            elif recv_data[0] == 1:
+                work_mode = "RECV"
+                break
+            elif recv_data[0] == 2:
+                work_mode = "WRITE REG"
+                break
+            elif recv_data[0] == 3:
+                work_mode = "READ REG"
+                break
+            elif recv_data[0] == 4:
+                work_mode = "QUIT"
+                break
 
-                if(recv_data[-1] == LAST_FRAME):
-                    header_get = False
-                    recv_data = np.delete(recv_data, 0) # delete header
-                    recv_data = np.delete(recv_data,np.where(recv_data == LAST_FRAME))
-                    sendFrame(recv_data)
-                    break
-                else:
-                    header_get = True
+            if(recv_data[-1] == LAST_FRAME):
+                header_get = False
                 recv_data = np.delete(recv_data, 0) # delete header
                 recv_data = np.delete(recv_data,np.where(recv_data == LAST_FRAME))
                 sendFrame(recv_data)
+                break
             else:
-                if(recv_data[-1] == LAST_FRAME):
-                    recv_data = np.delete(recv_data,np.where(recv_data == LAST_FRAME))
-                    if len(recv_data) > 0:
-                        sendFrame(recv_data)
-                    break
-                else:
+                header_get = True
+            recv_data = np.delete(recv_data, 0) # delete header
+            recv_data = np.delete(recv_data,np.where(recv_data == LAST_FRAME))
+            sendFrame(recv_data)
+        else:
+            if(recv_data[-1] == LAST_FRAME):
+                recv_data = np.delete(recv_data,np.where(recv_data == LAST_FRAME))
+                if len(recv_data) > 0:
                     sendFrame(recv_data)
+                break
+            else:
+                sendFrame(recv_data)
 
-    if work_mode == "CONFIG":
-        print("Config done\n")
-    elif work_mode == "WORK":
+    if work_mode == "SEND":
+        pass
+    elif work_mode == "RECV":
         recv_frame = recvFrame(oFrmNum)
         if len(recv_frame)== 0:
             print("No outputframe for this work.")
             recv_frame = np.array([18446744073709551615], dtype=np.uint64)
         send_buffer = recv_frame.tobytes()
         tcpCliSock.sendall(send_buffer)
+    elif work_mode == "WRITE REG":
+        mmio.write(int(recv_data[1]), int(recv_data[2]))
+    elif work_mode == "READ REG":
+        # not implement
+        pass
     elif work_mode == "QUIT":
         print('Wating...')
         tcpCliSock, addr = tcpSerSock.accept()

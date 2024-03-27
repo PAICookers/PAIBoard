@@ -2,8 +2,7 @@ import numpy as np
 import os
 
 from paiboard.base import PAIBoard
-
-from paiboard.ethernet.utils_for_ethernet import *
+from paiboard.ethernet.dma_ethernet import DMA_Ethernet
 
 class PAIBoard_Ethernet(PAIBoard):
 
@@ -16,33 +15,28 @@ class PAIBoard_Ethernet(PAIBoard):
         batch_size: int = 1,
     ):
         super().__init__(baseDir, timestep, layer_num, output_delay, batch_size)
+        self.dma_inst = DMA_Ethernet()
 
     def config(self, oFrmNum: int = 10000):
 
-        ip = '192.168.31.100'
-        port = 8889
-        self.addr = (ip, port)
-        buffer_bytes = 4096
-        self.buffer_num = int(buffer_bytes/8) # for uint64
+        self.oFrmNum = oFrmNum
+        self.dma_inst.write_reg(
+            self.dma_inst.REGFILE_BASE + self.dma_inst.OFAME_NUM_REG, oFrmNum
+        )
 
-        configPath = os.path.join(self.baseDir, "config_cores_all.bin")
-        configFrames = np.fromfile(configPath, dtype="<u8")
         print("----------------------------------")
         print("----------PAICORE CONFIG----------")
-        self.tcpCliSock = Ethernet_config(self.addr)
-        Ethernet_send(self.tcpCliSock, "CONFIG", configFrames, self.buffer_num)
+        self.dma_inst.send_frame(self.configFrames)
         print("----------------------------------")
 
+    def paicore_init(self, initFrames):
+        self.dma_inst.write_reg(self.dma_inst.REGFILE_BASE + self.dma_inst.CTRL_REG, 4)
+        self.dma_inst.send_frame(initFrames)
+        self.dma_inst.write_reg(self.dma_inst.REGFILE_BASE + self.dma_inst.CTRL_REG, 0)
+
     def inference(self, initFrames, inputFrames):
+        self.paicore_init(initFrames) # may be the bottleneck
+        # inputFrames = np.concatenate((initFrames, inputFrames))
 
-        workFrames = np.concatenate((initFrames, inputFrames))
-        # workFrames = inputFrames
-
-        Ethernet_send(self.tcpCliSock, "WORK", workFrames, self.buffer_num)
-        outputFrames =  Ethernet_recv(self.tcpCliSock, self.buffer_num)
-
-        return outputFrames
-
-    def __del__(self):
-        Ethernet_send(self.tcpCliSock, "QUIT", 0, self.buffer_num)
-        self.tcpCliSock.close()
+        self.dma_inst.send_frame(inputFrames)
+        return self.dma_inst.recv_frame(self.oFrmNum)

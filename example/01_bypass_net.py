@@ -20,3 +20,5 @@ if __name__ == "__main__":
         output_spike = snn(input_spike, TimeMeasure=False)
         assert np.equal(input_spike, output_spike).all()
     print("Test passed!")
+
+    snn.perf(test_num)

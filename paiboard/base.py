@@ -41,6 +41,9 @@ class PAIBoard(object):
             output_dest_info=self.output_dest_info,
         )
 
+        configPath = os.path.join(self.baseDir, "config_cores_all.bin")
+        self.configFrames = np.fromfile(configPath, dtype="<u8")
+
     def config(self, *args, **kwargs):
         # dma init & send config frame
         raise NotImplementedError
@@ -141,3 +144,6 @@ class PAIBoard(object):
         # pred = np.argmax(spike_out)
 
         return outputSpike
+
+    def perf(self, img_num):
+        print_time(img_num)
