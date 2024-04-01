@@ -34,8 +34,18 @@
 ### PAIBoard使用
     例化一个PAIBoard对象(三个平台任选其一)，需要用户填写工具链的结果存放目录baseDir、应用的timestep以及网络的层数layer_num，进行配置config后就可以输入数据进行推理，config可填写应用输出的帧数预估，如果不知道填10000。
 
-    snn = PAIBoard(baseDir, timestep, layer_num=0)
+    baseDir  :存放了所有工具链导出数据的文件夹
+    timestep :SNN推理所需的时间步
+    layer_num:SNN网络结构的层数,或是输入节点到输出节点经过的神经元数目
+
+
+    # PAIBoard例化
+    snn = PAIBoard_SIM(baseDir, timestep, layer_num=0)
     snn.config(oFrmNum=10000)
+
+    # 推理实例
+    # 根据你的应用产生相应的输入脉冲,送入snn后推理得到输出脉冲。
+    output_spike = snn(input_spike)
 
 极力推荐用户先使用PAIBoard_SIM上板模拟器来进行测试，无需硬件即可进行调试。
 
