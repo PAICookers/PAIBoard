@@ -3,7 +3,7 @@ from socket import *
 
 
 def npFrameSplit(inputFrame, buffer_num):
-    new_col = int(inputFrame.size / buffer_num)
+    new_col = int((inputFrame.size - 1) / buffer_num)
     new_shape = (new_col, buffer_num)
     first = inputFrame[0 : buffer_num * new_col].reshape(new_shape)
     second = inputFrame[buffer_num * new_col :]
@@ -39,8 +39,9 @@ def Ethernet_send(tcpCliSock, mode, send_frame, buffer_num):
     else:
         print("ERROR")
         exit()
-
-    send_frame = np.concatenate((header_frame, send_frame))
+    
+    num_frame = np.array([send_frame.size], dtype=np.uint64)
+    send_frame = np.concatenate((header_frame, num_frame, send_frame))
     send_frame = npFrameSplit(
         send_frame, buffer_num
     )  # split and add 0xFFFFFFFFFFFFFFFF

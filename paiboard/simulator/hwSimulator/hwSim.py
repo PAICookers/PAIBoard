@@ -721,12 +721,22 @@ class Chip:
         offChipSpikes = list()
         num = 0
         for spike in self.buffer:
+            # frameStr = "{:064b}".format(spike)
+            # dataLen = [4,10,10,10,3,11,8,8]
+            # for j in range(len(dataLen)):
+            #     print(frameStr[sum(dataLen[:j]):sum(dataLen[:j+1])] + " ",end="")
+            # print("")
+            # print("{:064b}\n".format(spike))
             if CHIPID(spike) != self.chipId:
                 offChipSpikes.append(spike)
             else:
                 coreId = COREID(spike)
+                
                 num += 1
-                self.cores[coreId].receive(spike)
+                if coreId not in self.cores:
+                    pass
+                else:
+                    self.cores[coreId].receive(spike)
         # print(num)
         self.buffer.clear()
         return offChipSpikes

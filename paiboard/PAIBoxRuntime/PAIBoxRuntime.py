@@ -192,6 +192,8 @@ class PAIBoxRuntime:
                             oframe_info,
                             oframes_on_coord & (SFF.GENERAL_MASK - SFF.DATA_MASK),
                         )
+                        # print(valid_idx)
+                        # print(data_on_coord)
                         data[valid_idx] = data_on_coord
 
                 d_with_shape = data.reshape(-1, timestep).T
@@ -267,6 +269,7 @@ class PAIBoxRuntime:
 
             for onode in output_dest_info.values():
                 # Traverse output destinations of a node
+                frames_of_dest = []
                 for dest_on_coord in onode.values():
                     # [i]*len(addr_axon) for i in [0, timestep)
                     ts.clear()
@@ -277,11 +280,13 @@ class PAIBoxRuntime:
                     # addr_axon: [0-X] -> [0-X]*timestep
                     dest_on_coord["addr_axon"] *= timestep
 
-                    frames_of_dest = OfflineWorkFrame1._frame_dest_reorganized(
+                    temp = OfflineWorkFrame1._frame_dest_reorganized(
                         dest_on_coord
                     )
-                    frames_of_dest.sort()
-                    frames.append(frames_of_dest)
+                    temp.sort()
+                    frames_of_dest.append(temp)
+                frames_of_dest = np.hstack(frames_of_dest)
+                frames.append(frames_of_dest)
 
             return frames
 

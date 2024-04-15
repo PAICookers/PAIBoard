@@ -4,6 +4,7 @@ import json
 
 from paiboard.PAIBoxRuntime.PAIBoxRuntime import PAIBoxRuntime
 from paiboard.utils.timeMeasure import *
+from paiboard.utils.utils_for_frame import frame_np2txt
 
 class PAIBoard(object):
     def __init__(
@@ -132,6 +133,7 @@ class PAIBoard(object):
             self.initFrames,
             inputFrames
         )
+        # frame_np2txt(outputFrames, self.baseDir + "/outputFrames.txt")
 
         t3 = time.time()
         outputSpike = self.genOutputSpike(

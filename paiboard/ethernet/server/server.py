@@ -78,6 +78,9 @@ def status():
     print("snn2fifo_cnt = " + str(snn2fifo_cnt))
     print("fifo2cpu_cnt = " + str(fifo2cpu_cnt))
 
+def delete_last(np_array, delete_num):
+    return np.delete(np_array, [i for i in range(np_array.size - delete_num, np_array.size)])
+
 overlay = Overlay("./hw_file/design_2.bit")
 dma_send = overlay.pl_datapath.axi_dma_0.sendchannel
 dma_recv = overlay.pl_datapath.axi_dma_0.recvchannel
@@ -85,7 +88,7 @@ dma_recv = overlay.pl_datapath.axi_dma_0.recvchannel
 xlnk = Xlnk()
 xlnk.xlnk_reset()
 
-oFrmNum = 100
+oFrmNum = 10000
 
 mmio = MMIO(USER_REG, ADDR_RANGE)
 
@@ -96,7 +99,6 @@ mmio.write(FIFO2CPU_CNT, 0)
 mmio.write(OFAME_NUM_REG, oFrmNum)
 mmio.write(OEN, 0x01)
 mmio.write(CHANNEL_MASK, 0x01)
-
 
 ip = '192.168.31.100'
 port = 8889
@@ -139,6 +141,7 @@ while True:
             res = res[int(buff_size/8):]
             print("res",len(res))
         if not header_get:
+            all_num = 0
             if recv_data[0] == 0:
                 work_mode = "SEND"
             elif recv_data[0] == 1:
@@ -154,22 +157,26 @@ while True:
                 work_mode = "QUIT"
                 break
 
-            if(recv_data[-1] == LAST_FRAME):
+            send_num = recv_data[1]
+            all_num += recv_data.size
+            if(all_num >= send_num + 2):
                 header_get = False
                 recv_data = np.delete(recv_data, 0) # delete header
-                recv_data = np.delete(recv_data,np.where(recv_data == LAST_FRAME))
+                recv_data = np.delete(recv_data, 0) # delete send_num
+                recv_data = delete_last(recv_data, int(all_num - send_num - 2))
                 sendFrame(recv_data)
                 break
             else:
                 header_get = True
+
             recv_data = np.delete(recv_data, 0) # delete header
-            recv_data = np.delete(recv_data,np.where(recv_data == LAST_FRAME))
+            recv_data = np.delete(recv_data, 0) # delete send_num
             sendFrame(recv_data)
         else:
-            if(recv_data[-1] == LAST_FRAME):
-                recv_data = np.delete(recv_data,np.where(recv_data == LAST_FRAME))
-                if len(recv_data) > 0:
-                    sendFrame(recv_data)
+            all_num += recv_data.size
+            if(all_num >= send_num + 2):
+                recv_data = delete_last(recv_data, int(all_num - send_num - 2))
+                sendFrame(recv_data)
                 break
             else:
                 sendFrame(recv_data)
@@ -184,9 +191,17 @@ while True:
         send_buffer = recv_frame.tobytes()
         tcpCliSock.sendall(send_buffer)
     elif work_mode == "WRITE REG":
-        mmio.write(int(recv_data[1]), int(recv_data[2]))
+        mmio.write(int(recv_data[2]), int(recv_data[3]))
     elif work_mode == "READ REG":
         # not implement
+        if int(recv_data[2]) == 0:
+            status()
+        else:
+            status()
+            mmio.write(CPU2FIFO_CNT, 0)
+            mmio.write(FIFO2SNN_CNT, 0)
+            mmio.write(SNN2FIFO_CNT, 0)
+            mmio.write(FIFO2CPU_CNT, 0)
         pass
     elif work_mode == "QUIT":
         print('Wating...')

@@ -59,9 +59,9 @@
     pip install paicorelib numpy
 
 
-### 样例数据下载，数据放到APP目录下
+### 样例数据下载，数据放到与example同级的result目录下
 
-    https://disk.pku.edu.cn:443/link/F71FF1D72EF5CD305A9AFEDD26FC6DC0
+    https://disk.pku.edu.cn/link/AA7CD623031EA54D8EB4DCD528471B24E2
 
 ### 运行
 vscode打开PAIBoard文件夹，点开某个py文件直接右上角运行即可
