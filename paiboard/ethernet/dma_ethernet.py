@@ -17,9 +17,8 @@ class DMA_Ethernet(DMA_base):
         self.REGFILE_BASE = 0x00000
     
     def read_reg(self, addr):
-
-        configFrames = np.array([addr], dtype=np.uint64)
-        Ethernet_send(self.tcpCliSock, "READ REG", configFrames, self.buffer_num)
+        reg_addr = np.array([addr], dtype=np.uint64)
+        return Ethernet_recv(self.tcpCliSock, self.buffer_num, read_reg=True, reg_addr=reg_addr)[0]
 
     def write_reg(self, addr, data):
 

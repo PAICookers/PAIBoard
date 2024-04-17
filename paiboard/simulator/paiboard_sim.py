@@ -20,6 +20,9 @@ class PAIBoard_SIM(PAIBoard):
         configPath = os.path.join(self.baseDir, "config_cores_all.txt")
         self.simulator = setOnChipNetwork(configPath, TimestepVerbose)
 
+    def paicore_status(self):
+        print("PAIBoard_SIM Not implemented Status")
+        
     def inference(self, initFrames, inputFrames):
         workFrames = np.concatenate((initFrames, inputFrames))
         outputFrames = runSimulator(self.simulator, workFrames)

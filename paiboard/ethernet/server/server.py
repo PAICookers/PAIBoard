@@ -70,6 +70,7 @@ def status():
     fifo2snn_cnt = mmio.read(FIFO2SNN_CNT)
     snn2fifo_cnt = mmio.read(SNN2FIFO_CNT)
     fifo2cpu_cnt = mmio.read(FIFO2CPU_CNT)
+    us_time_tick = mmio.read(US_TIME_TICK)
 
     print("rx_state     = " + str(rx_state    ))
     print("tx_state     = " + str(tx_state    ))
@@ -77,6 +78,15 @@ def status():
     print("fifo2snn_cnt = " + str(fifo2snn_cnt))
     print("snn2fifo_cnt = " + str(snn2fifo_cnt))
     print("fifo2cpu_cnt = " + str(fifo2cpu_cnt))
+    print("us_time_tick = " + str(us_time_tick))
+    
+    status_frame = np.array([rx_state,tx_state,cpu2fifo_cnt,fifo2snn_cnt,snn2fifo_cnt,fifo2cpu_cnt,us_time_tick], dtype=np.uint64)
+    return status_frame
+
+def read_reg(addr):
+    reg_data = mmio.read(addr)
+    reg_data_frame = np.array([reg_data], dtype=np.uint64)
+    return reg_data_frame
 
 def delete_last(np_array, delete_num):
     return np.delete(np_array, [i for i in range(np_array.size - delete_num, np_array.size)])
@@ -193,16 +203,9 @@ while True:
     elif work_mode == "WRITE REG":
         mmio.write(int(recv_data[2]), int(recv_data[3]))
     elif work_mode == "READ REG":
-        # not implement
-        if int(recv_data[2]) == 0:
-            status()
-        else:
-            status()
-            mmio.write(CPU2FIFO_CNT, 0)
-            mmio.write(FIFO2SNN_CNT, 0)
-            mmio.write(SNN2FIFO_CNT, 0)
-            mmio.write(FIFO2CPU_CNT, 0)
-        pass
+        reg_data_frame = read_reg(int(recv_data[2]))
+        send_buffer = reg_data_frame.tobytes()
+        tcpCliSock.sendall(send_buffer)        
     elif work_mode == "QUIT":
         print('Wating...')
         tcpCliSock, addr = tcpSerSock.accept()

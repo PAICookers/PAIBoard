@@ -50,8 +50,11 @@ def Ethernet_send(tcpCliSock, mode, send_frame, buffer_num):
         send_buffer = send_frame[i].tobytes()
         rc = tcpCliSock.send(send_buffer)
 
-def Ethernet_recv(tcpCliSock, buffer_num):
-    Ethernet_send(tcpCliSock, "RECV", None, buffer_num)
+def Ethernet_recv(tcpCliSock, buffer_num, read_reg=False, reg_addr=None):
+    if read_reg:
+        Ethernet_send(tcpCliSock, "READ REG", reg_addr, buffer_num)
+    else:
+        Ethernet_send(tcpCliSock, "RECV", None, buffer_num)
 
     recv_buffer = tcpCliSock.recv(buffer_num << 3)
     outputFrames = np.frombuffer(recv_buffer, dtype="uint64")
