@@ -45,6 +45,8 @@ class PAIBoard(object):
         configPath = os.path.join(self.baseDir, "config_cores_all.bin")
         self.configFrames = np.fromfile(configPath, dtype="<u8")
 
+        self.dma_inst = None
+
     def config(self, *args, **kwargs):
         # dma init & send config frame
         raise NotImplementedError
@@ -149,8 +151,11 @@ class PAIBoard(object):
 
     def record_time(self, full_time):
         # TODO : read register to get core_time
-        core_time = self.dma_inst.read_reg(self.dma_inst.US_TIME_TICK)
-        recore_time(core_time, full_time)
+        if self.dma_inst is None:
+            pass
+        else:
+            core_time = self.dma_inst.read_reg(self.dma_inst.US_TIME_TICK)
+            record_time(core_time, full_time)
 
     def perf(self, img_num):
         print_time(img_num)
