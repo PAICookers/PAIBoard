@@ -38,7 +38,7 @@ def get_original_function(decorated_func):
         return decorated_func
 
 
-def recore_time(core_time, full_time):
+def record_time(core_time, full_time):
     time_dict["FULL INFERENCE"] = time_dict["FULL INFERENCE"] + (full_time) * 1000 * 1000
     time_dict["CORE INFERENCE"] = time_dict["CORE INFERENCE"] + int(core_time / 1.0)
 
