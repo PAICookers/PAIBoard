@@ -3,6 +3,7 @@ import os
 
 from paiboard.base import PAIBoard
 from paiboard.ethernet.dma_ethernet import DMA_Ethernet
+from paiboard.utils.timeMeasure import time_calc_addText, get_original_function
 
 class PAIBoard_Ethernet(PAIBoard):
 
@@ -38,7 +39,7 @@ class PAIBoard_Ethernet(PAIBoard):
         # print(len(self.configFrames))
         print("----------------------------------")
         print("----------PAICORE CONFIG----------")
-        self.dma_inst.send_frame(self.configFrames)
+        self.dma_inst.send_config_frame(self.configFrames)
         print("----------------------------------")
 
 
@@ -55,7 +56,7 @@ class PAIBoard_Ethernet(PAIBoard):
         print("fifo2cpu_cnt = " + str(fifo2cpu_cnt))
         print("us_time_tick = " + str(us_time_tick))
         
-
+    @time_calc_addText("Init          ")
     def paicore_init(self, initFrames):
         self.dma_inst.write_reg(self.dma_inst.REGFILE_BASE + self.dma_inst.CTRL_REG, 4)
         self.dma_inst.send_frame(initFrames)

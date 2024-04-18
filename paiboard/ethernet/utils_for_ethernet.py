@@ -50,15 +50,29 @@ def Ethernet_send(tcpCliSock, mode, send_frame, buffer_num):
         send_buffer = send_frame[i].tobytes()
         rc = tcpCliSock.send(send_buffer)
 
-def Ethernet_recv(tcpCliSock, buffer_num, read_reg=False, reg_addr=None):
+def Ethernet_recv(tcpCliSock, buffer_num, oFrmNum, read_reg=False, reg_addr=None):
     if read_reg:
         Ethernet_send(tcpCliSock, "READ REG", reg_addr, buffer_num)
     else:
         Ethernet_send(tcpCliSock, "RECV", None, buffer_num)
 
+    # TODO: too much frame
     recv_buffer = tcpCliSock.recv(buffer_num << 3)
     outputFrames = np.frombuffer(recv_buffer, dtype="uint64")
-    outputFrames = np.delete(
-        outputFrames, np.where(outputFrames == 18446744073709551615)
-    )
+    if oFrmNum <= buffer_num:
+        pass
+    else:
+        while(outputFrames.size < oFrmNum):
+            recv_buffer = tcpCliSock.recv(buffer_num << 3)
+            recv_data = np.frombuffer(recv_buffer, dtype='uint64')
+            outputFrames = np.concatenate((outputFrames, recv_data))
+            if outputFrames.size % buffer_num != 0:
+                recv_buffer = tcpCliSock.recv(buffer_num << 3)
+                recv_data = np.frombuffer(recv_buffer, dtype='uint64')
+                outputFrames = np.concatenate((outputFrames, recv_data))
+    if read_reg:
+        pass
+    else:
+        outputFrames = np.delete(outputFrames, np.where(outputFrames == 0))
+        outputFrames = np.delete(outputFrames, np.where(outputFrames == 18446744073709551615))
     return outputFrames

@@ -33,6 +33,16 @@ SINGLE_CHANNEL  = 24 * 4
 CHANNEL_MASK    = 25 * 4
 OEN             = 26 * 4
 
+def npFrameSplit(inputFrame, buffer_num):
+    new_col = int((inputFrame.size - 1) / buffer_num)
+    new_shape = (new_col, buffer_num)
+    first = inputFrame[0 : buffer_num * new_col].reshape(new_shape)
+    second = inputFrame[buffer_num * new_col :]
+    all_one = np.array([[18446744073709551615] * buffer_num], dtype=np.uint64)
+    all_one[0, 0 : second.size] = second
+    split_frame = np.concatenate((first, all_one))
+    return split_frame
+
 def sendFrame(frames_bin):
     frames_num = frames_bin.size
     buffer = xlnk.cma_array(shape=(frames_num,), dtype=np.uint64)
@@ -57,10 +67,9 @@ def recvFrame(oFrmNum):
     mmio.write(RX_STATE, 0)
     dma_recv.wait()
 
-    outputFrames = np.delete(buffer,np.where(buffer == 0))
-    outputFrames = np.delete(outputFrames,np.where(buffer == 18446744073709551615))
-        
-    return outputFrames
+    buffer = buffer[0:oFrmNum]
+
+    return buffer
 
 def status():
 
@@ -115,6 +124,7 @@ port = 8889
 addr = (ip, port)
 
 buff_size = 4096 #消息的最大长度
+buffer_num = int(buff_size / 8)  # for uint64
 
 tcpSerSock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 tcpSerSock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
@@ -198,9 +208,19 @@ while True:
         if len(recv_frame)== 0:
             print("No outputframe for this work.")
             recv_frame = np.array([18446744073709551615], dtype=np.uint64)
-        send_buffer = recv_frame.tobytes()
-        tcpCliSock.sendall(send_buffer)
+        # TODO: too much frame
+        if oFrmNum > buffer_num:
+            send_frame = npFrameSplit(recv_frame, buffer_num)  # split and add 0xFFFFFFFFFFFFFFFF
+            for i in range(send_frame.shape[0]):
+                print(i)
+                send_buffer = send_frame[i].tobytes()
+                rc = tcpCliSock.send(send_buffer)
+        else:
+            send_buffer = recv_frame.tobytes()
+            tcpCliSock.sendall(send_buffer)
     elif work_mode == "WRITE REG":
+        if(int(recv_data[2]) == OFAME_NUM_REG):
+           oFrmNum = int(recv_data[3])
         mmio.write(int(recv_data[2]), int(recv_data[3]))
     elif work_mode == "READ REG":
         reg_data_frame = read_reg(int(recv_data[2]))
