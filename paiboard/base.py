@@ -147,5 +147,10 @@ class PAIBoard(object):
 
         return outputSpike
 
+    def record_time(self, full_time):
+        # TODO : read register to get core_time
+        core_time = self.dma_inst.read_reg(self.dma_inst.US_TIME_TICK)
+        recore_time(core_time, full_time)
+
     def perf(self, img_num):
         print_time(img_num)

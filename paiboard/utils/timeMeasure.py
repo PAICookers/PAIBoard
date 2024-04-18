@@ -45,5 +45,8 @@ def recore_time(core_time, full_time):
 def print_time(img_num):
     print("----------------------------------")
     for key in time_dict:
-        print(key + " TIME : {:.1f} us".format(time_dict[key] / img_num))
+        if (time_dict[key] / img_num) > 1000:
+            print(key + " TIME : {:.1f} ms".format(time_dict[key] / img_num / 1000))
+        else:
+            print(key + " TIME : {:.1f} us".format(time_dict[key] / img_num))
     print("----------------------------------")
