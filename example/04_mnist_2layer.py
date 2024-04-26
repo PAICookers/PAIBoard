@@ -9,12 +9,12 @@ from example.Encoder.encoder import PoissonEncoder
 
 from paiboard import PAIBoard_SIM
 # from paiboard import PAIBoard_PCIe
-# from paiboard import PAIBoard_Ethernet
+from paiboard import PAIBoard_Ethernet
 
 if __name__ == "__main__":
-    timestep = 8
-    layer_num = 0
-    baseDir = "./result/03.1_mnist_1layer_dual_port/"
+    timestep = 4
+    layer_num = 1
+    baseDir = "./result/04_mnist_2layer/"
     snn = PAIBoard_SIM(baseDir, timestep, layer_num=layer_num)
     # snn = PAIBoard_PCIe(baseDir, timestep, layer_num=layer_num)
     # snn = PAIBoard_Ethernet(baseDir, timestep, layer_num=layer_num)
@@ -24,8 +24,7 @@ if __name__ == "__main__":
     testdata, testlabels = load_mnist.CreatData(dataset_root)
     classes = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
     print()
-    pbsim_data = np.load(baseDir + "output_save.npy")
-    img_num = 1
+    img_num = 10
     correct = 0
 
     for i in range(img_num):
@@ -33,19 +32,11 @@ if __name__ == "__main__":
         input_spike = PoissonEncoder(x=input_data, timesteps=timestep)
 
         t1 = time.time()
-        # two input concat by list
-        output_spike_dict = snn([input_spike, input_spike], TimeMeasure=True)
+        output_spike = snn(input_spike, TimeMeasure=True)
         t2 = time.time()
 
         snn.record_time(t2 - t1)
         
-        # two output in output_spike_dict, get them by name in output_dest_info
-        # you can name it in PAIBox when you build the network
-        output_spike = np.concatenate(
-            (output_spike_dict["dual_port_o1"], output_spike_dict["dual_port_o2"]),
-            axis=1,
-        )
-
         if output_spike is not None:
             pred = np.argmax(output_spike.sum(axis=0))
         if pred == testlabels[i]:

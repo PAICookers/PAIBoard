@@ -50,7 +50,7 @@
 极力推荐用户先使用PAIBoard_SIM上板模拟器来进行测试，无需硬件即可进行调试。
 
 ## 实例复现
-### 运行环境
+### 上位机运行环境
 以conda为例
 
     conda create -n PAIBOX python=3.11
@@ -58,6 +58,13 @@
 
     pip install paicorelib numpy
 
+### 上板流程
+    FPGA与PAICORE板卡上电，连接网线
+    ssh xilinx@192.168.31.100
+    pwd:xilinx
+    cd jupyter_notebooks/PAICORE/Ethernet/
+    sudo python3 server.py
+    显示Wating...便可在上位机运行应用程序
 
 ### 样例数据下载，数据放到与example同级的result目录下
 
