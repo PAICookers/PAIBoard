@@ -30,9 +30,12 @@ if __name__ == "__main__":
 
     for i in range(img_num):
         input_data = testdata[i].reshape(1, 28, 28)
-
         input_spike = PoissonEncoder(x=input_data, timesteps=timestep)
+
+        t1 = time.time()
         output_spike = snn(input_spike, TimeMeasure=True)
+        t2 = time.time()
+        snn.record_time(t2 - t1)
         if output_spike is not None:
             if i < 100:
                 if not (output_spike == pbsim_data[i]).all():

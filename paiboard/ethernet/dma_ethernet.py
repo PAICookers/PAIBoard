@@ -19,7 +19,7 @@ class DMA_Ethernet(DMA_base):
     
     def read_reg(self, addr):
         reg_addr = np.array([addr], dtype=np.uint64)
-        return Ethernet_recv(self.tcpCliSock, self.buffer_num, oFrmNum=1,read_reg=True, reg_addr=reg_addr)[0]
+        return Ethernet_recv(self.tcpCliSock, None, self.buffer_num, oFrmNum=1,read_reg=True, reg_addr=reg_addr)[0]
 
     def write_reg(self, addr, data):
 
@@ -34,9 +34,8 @@ class DMA_Ethernet(DMA_base):
         Ethernet_send(self.tcpCliSock, "SEND", send_data, self.buffer_num)
 
     @time_calc_addText("RecvFrame     ")
-    def recv_frame(self, oFrmNum):
-        outputFrames = Ethernet_recv(self.tcpCliSock, self.buffer_num, oFrmNum=oFrmNum)
-        print(f"RecvFrame: {outputFrames.size}")
+    def recv_frame(self, send_data, oFrmNum):
+        outputFrames = Ethernet_recv(self.tcpCliSock, send_data, self.buffer_num, oFrmNum=oFrmNum)
         return outputFrames
 
     def __del__(self):

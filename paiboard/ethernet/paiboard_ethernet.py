@@ -3,6 +3,8 @@ import os
 
 from paiboard.base import PAIBoard
 from paiboard.ethernet.dma_ethernet import DMA_Ethernet
+from paiboard.ethernet.global_hw_params import getBoard_data
+
 from paiboard.utils.timeMeasure import time_calc_addText, get_original_function
 
 class PAIBoard_Ethernet(PAIBoard):
@@ -59,12 +61,12 @@ class PAIBoard_Ethernet(PAIBoard):
     @time_calc_addText("Init          ")
     def paicore_init(self, initFrames):
         self.dma_inst.write_reg(self.dma_inst.REGFILE_BASE + self.dma_inst.CTRL_REG, 4)
-        self.dma_inst.send_frame(initFrames)
+        self.dma_inst.send_config_frame(initFrames)
         self.dma_inst.write_reg(self.dma_inst.REGFILE_BASE + self.dma_inst.CTRL_REG, 0)
 
     def inference(self, initFrames, inputFrames):
         self.paicore_init(initFrames) # may be the bottleneck
         # inputFrames = np.concatenate((initFrames, inputFrames))
-
-        self.dma_inst.send_frame(inputFrames)
-        return self.dma_inst.recv_frame(self.oFrmNum)
+        # np.save("inputFrames.npy", inputFrames)
+        # self.dma_inst.send_frame()
+        return self.dma_inst.recv_frame(inputFrames, self.oFrmNum)

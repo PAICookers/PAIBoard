@@ -166,7 +166,6 @@ while True:
                 work_mode = "SEND"
             elif recv_data[0] == 1:
                 work_mode = "RECV"
-                break
             elif recv_data[0] == 2:
                 work_mode = "WRITE REG"
                 break
@@ -212,7 +211,6 @@ while True:
         if oFrmNum > buffer_num:
             send_frame = npFrameSplit(recv_frame, buffer_num)  # split and add 0xFFFFFFFFFFFFFFFF
             for i in range(send_frame.shape[0]):
-                print(i)
                 send_buffer = send_frame[i].tobytes()
                 rc = tcpCliSock.send(send_buffer)
         else:

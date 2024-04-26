@@ -9,7 +9,7 @@ from example.Encoder.encoder import PoissonEncoder
 
 from paiboard import PAIBoard_SIM
 # from paiboard import PAIBoard_PCIe
-from paiboard import PAIBoard_Ethernet
+# from paiboard import PAIBoard_Ethernet
 
 if __name__ == "__main__":
     timestep = 4
