@@ -1,13 +1,14 @@
 import numpy as np
 
 from paiboard.dma.base import DMA_base 
+from paiboard.pcie.example import pcie_init,read_bypass,write_bypass
+from paiboard.pcie.example import send_dma_np, read_dma_np
+from paiboard.utils.timeMeasure import time_calc_addText, get_original_function
 
 class DMA_PCIe(DMA_base):
     def __init__(self, oen: int, channel_mask: int) -> None:
         super().__init__()
 
-        from paiboard.pcie.example import pcie_init,read_bypass,write_bypass
-        from paiboard.pcie.example import send_dma_np, read_dma_np
         if(pcie_init() < 0):
             print("pcie_init error")
 
@@ -29,6 +30,7 @@ class DMA_PCIe(DMA_base):
     def write_reg(self, addr, data):
         write_bypass(addr, data)
 
+    @time_calc_addText("SendFrame     ")
     def send_frame(self, send_data, multi_channel_enable = False):
         if(multi_channel_enable):
             write_bypass(self.REGFILE_BASE + self.SINGLE_CHANNEL, 0)
@@ -43,6 +45,10 @@ class DMA_PCIe(DMA_base):
             val = read_bypass(self.REGFILE_BASE + self.TX_STATE)
         write_bypass(self.REGFILE_BASE + self.TX_STATE,0)
 
+    def send_config_frame(self, send_data):
+        self.send_frame(send_data, multi_channel_enable = False)
+
+    @time_calc_addText("RecvFrame     ")
     def recv_frame(self, oFrmNum):
         write_bypass(self.REGFILE_BASE + self.RX_STATE,1)
         
