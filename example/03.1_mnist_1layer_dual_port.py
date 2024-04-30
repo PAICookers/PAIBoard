@@ -8,8 +8,8 @@ import example.datasets.load_mnist as load_mnist
 from example.Encoder.encoder import PoissonEncoder
 
 from paiboard import PAIBoard_SIM
-# from paiboard import PAIBoard_PCIe
-# from paiboard import PAIBoard_Ethernet
+from paiboard import PAIBoard_PCIe
+from paiboard import PAIBoard_Ethernet
 
 if __name__ == "__main__":
     timestep = 8
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     classes = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
     print()
     pbsim_data = np.load(baseDir + "output_save.npy")
-    img_num = 1
+    img_num = 10
     correct = 0
 
     for i in range(img_num):

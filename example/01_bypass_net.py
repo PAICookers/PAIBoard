@@ -2,8 +2,8 @@ import __init__
 import numpy as np
 import time
 from paiboard import PAIBoard_SIM
-# from paiboard import PAIBoard_PCIe
-# from paiboard import PAIBoard_Ethernet
+from paiboard import PAIBoard_PCIe
+from paiboard import PAIBoard_Ethernet
 
 if __name__ == "__main__":
     timestep = 3
@@ -14,7 +14,7 @@ if __name__ == "__main__":
     # snn = PAIBoard_Ethernet(baseDir, timestep, layer_num=layer_num)
     snn.config(oFrmNum=20)
 
-    test_num = 1
+    test_num = 1000
     for i in range(test_num):
         input_spike = np.eye(timestep, dtype=np.int8)
 

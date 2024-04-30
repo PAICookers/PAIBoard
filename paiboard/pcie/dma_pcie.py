@@ -1,8 +1,11 @@
 import numpy as np
 
 from paiboard.dma.base import DMA_base 
-from paiboard.pcie.example import pcie_init,read_bypass,write_bypass
-from paiboard.pcie.example import send_dma_np, read_dma_np
+try:
+    from paiboard.pcie.example import pcie_init,read_bypass,write_bypass
+    from paiboard.pcie.example import send_dma_np, read_dma_np
+except:
+    ImportError
 from paiboard.utils.timeMeasure import time_calc_addText, get_original_function
 
 class DMA_PCIe(DMA_base):
