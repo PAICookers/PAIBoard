@@ -66,9 +66,9 @@
     sudo python3 server.py
     显示Wating...便可在上位机运行应用程序
 
-### 样例数据下载，数据放到与example同级的result目录下
+### 样例数据下载，数据放到PAIBoard/result目录下
 
-    https://disk.pku.edu.cn/link/AA7CD623031EA54D8EB4DCD528471B24E2
+    https://disk.pku.edu.cn/link/AAD7D8BA3609BF4515A01E6842F6D7E589
 
 ### 运行
 vscode打开PAIBoard文件夹，点开某个py文件直接右上角运行即可
