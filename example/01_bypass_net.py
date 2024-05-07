@@ -14,7 +14,7 @@ if __name__ == "__main__":
     # snn = PAIBoard_Ethernet(baseDir, timestep, layer_num=layer_num)
     snn.config(oFrmNum=20)
 
-    test_num = 1000
+    test_num = 100
     for i in range(test_num):
         input_spike = np.eye(timestep, dtype=np.int8)
 
