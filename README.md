@@ -56,15 +56,25 @@
     conda create -n PAIBOX python=3.11
     conda activate PAIBOX
 
-    pip install paicorelib numpy
+    pip install paicorelib numpy tqdm
+    pip install pyserial
 
 ### 上板流程
-    FPGA与PAICORE板卡上电，连接网线
-    ssh xilinx@192.168.31.100
-    pwd:xilinx
+
+#### 模拟器测试
+    直接在上位机运行应用程序，应用程序中需例化PAIBoard_SIM
+    
+#### PCIe板卡
+    FPGA与PAICORE板卡上电，连接PCIe线
+    直接在上位机运行应用程序，应用程序中需例化PAIBoard_PCIe
+
+#### Ethernet板卡
+FPGA与PAICORE板卡上电，连接网线，新开一个终端，命令行输入以下指令(pwd:xilinx)：
+
+    ssh xilinx@192.168.31.100   
     cd jupyter_notebooks/PAICORE/Ethernet/
     sudo python3 server.py
-    显示Wating...便可在上位机运行应用程序
+显示Wating...便可在上位机运行应用程序，应用程序中需例化PAIBoard_Ethernet
 
 ### 样例数据下载，数据放到PAIBoard/result目录下
 
