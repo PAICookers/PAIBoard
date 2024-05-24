@@ -14,6 +14,7 @@ class PAIBoard(object):
         layer_num: int = 0,
         output_delay: int = 0,
         batch_size: int = 1,
+        backend: str = "PAIBox",
     ):
         self.baseDir = baseDir
         assert timestep * batch_size <= 256 # batch inference limit
@@ -21,26 +22,46 @@ class PAIBoard(object):
         self.batch_size = batch_size
         self.layer_num = layer_num
         self.output_delay = output_delay
+        self.backend = backend
 
-        coreInfoPath = os.path.join(self.baseDir, "core_params.json")
-        self.initFrames = PAIBoxRuntime.gen_init_frame(coreInfoPath)
-        self.syncFrames = PAIBoxRuntime.gen_sync_frame(self.timestep + self.layer_num)
+        self.max_output_frame_num = 0
 
-        inputInfoPath = os.path.join(self.baseDir, "input_proj_info.json")
-        with open(inputInfoPath, "r", encoding="utf8") as fp:
-            input_proj_info = json.load(fp)
-        self.input_frames_info = PAIBoxRuntime.gen_input_frames_info(
-            timestep=self.timestep * self.batch_size, input_proj_info=input_proj_info
-        )
+        if self.backend == "PAIBox":
+            coreInfoPath = os.path.join(self.baseDir, "core_params.json")
+            self.initFrames = PAIBoxRuntime.gen_init_frame(coreInfoPath)
+            self.syncFrames = PAIBoxRuntime.gen_sync_frame(self.timestep + self.layer_num)
 
-        outputInfoPath = os.path.join(self.baseDir, "output_dest_info.json")
-        with open(outputInfoPath, "r", encoding="utf8") as fp:
-            self.output_dest_info = json.load(fp)
-        self.output_frames_info = PAIBoxRuntime.gen_output_frames_info(
-            timestep=self.timestep * self.batch_size,
-            delay=self.output_delay,
-            output_dest_info=self.output_dest_info,
-        )
+            inputInfoPath = os.path.join(self.baseDir, "input_proj_info.json")
+            with open(inputInfoPath, "r", encoding="utf8") as fp:
+                input_proj_info = json.load(fp)
+            self.input_frames_info = PAIBoxRuntime.gen_input_frames_info(
+                timestep=self.timestep * self.batch_size, input_proj_info=input_proj_info
+            )
+
+            outputInfoPath = os.path.join(self.baseDir, "output_dest_info.json")
+            with open(outputInfoPath, "r", encoding="utf8") as fp:
+                self.output_dest_info = json.load(fp)
+            self.output_frames_info = PAIBoxRuntime.gen_output_frames_info(
+                timestep=self.timestep * self.batch_size,
+                delay=self.output_delay,
+                output_dest_info=self.output_dest_info,
+            )
+
+        elif backend == "PAIFLOW":
+            from runtime import loadAuxNet
+            from snn_utils import loadInputFormats, loadOutputFormats, binary_to_uint64,GEN_INIT_SYNC
+            self.baseDir  =os.path.join(self.baseDir, "output")
+            auxNetDir = os.path.join(self.baseDir, "auxNet")
+            self.preNet, self.postNet = loadAuxNet(auxNetDir)
+
+            self.frameFormats, self.frameNums, self.inputNames = loadInputFormats(self.baseDir)
+            self.initFrames,self.syncFrames = GEN_INIT_SYNC(self.frameFormats, self.frameNums)
+            vectorized_binary_to_uint64 = np.vectorize(binary_to_uint64)
+            self.frameFormats = vectorized_binary_to_uint64(self.frameFormats[self.frameNums[0]:-1])
+            
+            self.outDict, self.shapeDict, self.scaleDict, self.mapper = loadOutputFormats(self.baseDir)
+        
+            self.coreType = "offline"
 
         configPath = os.path.join(self.baseDir, "config_cores_all.bin")
         self.configFrames = np.fromfile(configPath, dtype="<u8")
@@ -122,31 +143,46 @@ class PAIBoard(object):
         return outputSpike
 
     def __call__(self, input_spike, TimeMeasure=False):
-        t1 = time.time()
-        spikeFrame = self.genSpikeFrame(input_spike, self.input_frames_info)
-        t2 = time.time()
-        time_dict["genSpikeFrame "] = (
-            time_dict["genSpikeFrame "] + (t2 - t1) * 1000 * 1000
-        )
-
+        if self.backend == "PAIBox":
+            t1 = time.time()
+            spikeFrame = self.genSpikeFrame(input_spike, self.input_frames_info)
+            t2 = time.time()
+            time_dict["genSpikeFrame "] = (
+                time_dict["genSpikeFrame "] + (t2 - t1) * 1000 * 1000
+            )
+        elif self.backend == "PAIFLOW":
+            from runtime import runPreNetWrap
+            from snn_utils import Tensor2FrameWrap
+            x = runPreNetWrap(self.preNet, self.inputNames, TimeMeasure, *input_spike)
+            spikeFrame = Tensor2FrameWrap(x, self.frameFormats,self.inputNames, TimeMeasure)
+     
         inputFrames = np.concatenate((spikeFrame, self.syncFrames))
-
         outputFrames = self.inference(
             self.initFrames,
             inputFrames
         )
+        if outputFrames.shape[0] > self.max_output_frame_num:
+            self.max_output_frame_num = outputFrames.shape[0]
+        print(self.max_output_frame_num, end="") 
         # frame_np2txt(outputFrames, self.baseDir + "/outputFrames.txt")
 
-        t3 = time.time()
-        outputSpike = self.genOutputSpike(
-            outputFrames, self.output_frames_info, self.timestep
-        )
-        t4 = time.time()
-        time_dict["genOutputSpike"] = (
-            time_dict["genOutputSpike"] + (t4 - t3) * 1000 * 1000
-        )
-        # pred = np.argmax(spike_out)
-
+        if self.backend == "PAIBox":
+            t3 = time.time()
+            outputSpike = self.genOutputSpike(
+                outputFrames, self.output_frames_info, self.timestep
+            )
+            t4 = time.time()
+            time_dict["genOutputSpike"] = (
+                time_dict["genOutputSpike"] + (t4 - t3) * 1000 * 1000
+            )
+            # pred = np.argmax(spike_out)
+        elif self.backend == "PAIFLOW":
+            from snn_utils import Frame2TensorWrap
+            outputFrames_list = []
+            for i in range(len(outputFrames)):
+                out_str = bin(outputFrames[i])
+                outputFrames_list.append(out_str[2:])
+            outData, outputSpike = Frame2TensorWrap(outputFrames_list, self.outDict, self.shapeDict, self.scaleDict, self.mapper, self.timestep, self.coreType, TimeMeasure)
         return outputSpike
 
     def record_time(self, full_time):

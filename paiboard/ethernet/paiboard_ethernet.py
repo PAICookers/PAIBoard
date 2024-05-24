@@ -16,8 +16,9 @@ class PAIBoard_Ethernet(PAIBoard):
         layer_num: int = 0,
         output_delay: int = 0,
         batch_size: int = 1,
+        backend: str = "PAIBox",
     ):
-        super().__init__(baseDir, timestep, layer_num, output_delay, batch_size)
+        super().__init__(baseDir, timestep, layer_num, output_delay, batch_size, backend)
         self.dma_inst = DMA_Ethernet()
 
         self.dma_inst.write_reg(self.dma_inst.REGFILE_BASE + self.dma_inst.CPU2FIFO_CNT, 0)

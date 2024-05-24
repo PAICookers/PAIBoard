@@ -2,7 +2,7 @@ import numpy as np
 import os
 
 from paiboard.base import PAIBoard
-from paiboard.simulator.hwSimulator.hwSimulator import *
+from paiboard.simulator.hwSimulator.hwSimulator import setOnChipNetwork, runSimulator
 
 class PAIBoard_SIM(PAIBoard):
 
@@ -13,8 +13,9 @@ class PAIBoard_SIM(PAIBoard):
         layer_num: int = 0,
         output_delay: int = 0,
         batch_size: int = 1,
+        backend: str = "PAIBox",
     ):
-        super().__init__(baseDir, timestep, layer_num, output_delay, batch_size)
+        super().__init__(baseDir, timestep, layer_num, output_delay, batch_size, backend)
     
     def config(self, oFrmNum: int = 10000, TimestepVerbose: bool = False):
         configPath = os.path.join(self.baseDir, "config_cores_all.txt")

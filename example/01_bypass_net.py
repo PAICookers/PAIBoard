@@ -13,8 +13,8 @@ if __name__ == "__main__":
     # snn = PAIBoard_PCIe(baseDir, timestep, layer_num=layer_num)
     # snn = PAIBoard_Ethernet(baseDir, timestep, layer_num=layer_num)
     snn.config(oFrmNum=20)
-
-    test_num = 100
+    snn.paicore_status()
+    test_num = 1
     for i in range(test_num):
         input_spike = np.eye(timestep, dtype=np.int8)
 

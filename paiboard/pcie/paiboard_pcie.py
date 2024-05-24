@@ -17,8 +17,9 @@ class PAIBoard_PCIe(PAIBoard):
         layer_num: int = 0,
         output_delay: int = 0,
         batch_size: int = 1,
+        backend: str = "PAIBox",
     ):
-        super().__init__(baseDir, timestep, layer_num, output_delay, batch_size)
+        super().__init__(baseDir, timestep, layer_num, output_delay, batch_size, backend)
         self.globalSignalDelay, self.oen, self.channel_mask = getBoard_data()
         self.dma_inst = DMA_PCIe(self.oen, self.channel_mask)
 
