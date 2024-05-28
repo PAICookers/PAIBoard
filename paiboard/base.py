@@ -28,7 +28,6 @@ class PAIBoard(object):
         self.source_chip = source_chip
 
         self.max_output_frame_num = 0
-        print(backend)
         if self.backend == "PAIBox":
             coreInfoPath = os.path.join(self.baseDir, "core_params.json")
             self.initFrames = PAIBoxRuntime.gen_init_frame(coreInfoPath, self.source_chip)

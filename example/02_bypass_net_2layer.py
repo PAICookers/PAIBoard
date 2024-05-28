@@ -9,7 +9,7 @@ from paiboard import PAIBoard_Ethernet
 if __name__ == "__main__":
     timestep = 3
     layer_num = 1
-    baseDir = "./result/02_bypass_net_2layer"
+    baseDir = "./result/bypass_net/02_bypass_net_2layer"
     snn = PAIBoard_SIM(baseDir, timestep, layer_num=layer_num)
     # snn = PAIBoard_PCIe(baseDir, timestep, layer_num=layer_num)
     # snn = PAIBoard_Ethernet(baseDir, timestep, layer_num=layer_num)
@@ -22,9 +22,9 @@ if __name__ == "__main__":
         t1 = time.time()
         output_spike = snn(input_spike, TimeMeasure=False)
         t2 = time.time()
-    
+
         snn.record_time(t2 - t1)
         assert np.equal(input_spike, output_spike).all()
     print("Test passed!")
-
+    snn.paicore_status()
     snn.perf(test_num)
