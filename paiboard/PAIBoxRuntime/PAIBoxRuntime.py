@@ -308,19 +308,20 @@ class PAIBoxRuntime:
         return oframes_info
     
     @staticmethod
-    def gen_init_frame(coreInfoPath):
+    def gen_init_frame(coreInfoPath, source_chip):
         with open(coreInfoPath, "r", encoding="utf8") as fp:
             core_params = json.load(fp)
 
         initFrames = np.array([], dtype=np.uint64)
         for core_addr in core_params:
-            core_coord = Coord.from_addr(int(core_addr))
+            # core_coord = Coord.from_addr(int(core_addr))
+            core_coord = Coord(*eval(core_addr))
             # todo : chip_coord
-            core_init_frame = OfflineFrameGen.gen_magic_init_frame(Coord(0, 0), core_coord)
+            core_init_frame = OfflineFrameGen.gen_magic_init_frame(Coord(source_chip[0], source_chip[1]), core_coord)
             initFrames = np.concatenate((initFrames, core_init_frame))
         return initFrames
 
     @staticmethod
-    def gen_sync_frame(n_sync: int):
+    def gen_sync_frame(n_sync: int, source_chip):
         # todo : chip_coord
-        return OfflineFrameGen.gen_work_frame2(Coord(0, 0), n_sync).value
+        return OfflineFrameGen.gen_work_frame2(Coord(source_chip[0], source_chip[1]), n_sync).value
