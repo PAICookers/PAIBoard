@@ -1,3 +1,22 @@
+# oen for PAICORE
+
+# oen = 0 means send_channel
+# oen = 1 means receive_channel
+
+# 4bit oen for FPGA
+
+# oen = 1 means send_channel
+# oen = 0 means receive_channel
+
+# U3C2 U3C6 U2C2 U2C6
+
+# BONDING Version
+# W2 W6 E2 E6 
+
+# FLIP CHIP Version
+# E2 E6 W2 W6
+
+
 # BOARD_LIST = ["FLIP8", "BONDING003", "BONDING004", "BONDING008", "BONDING8"]
 
 def getBoard_data(BOARD_NUMBER = "FLIP8", FULL_CHANNEL_NUM = 4):

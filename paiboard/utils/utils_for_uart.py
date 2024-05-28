@@ -1,53 +1,142 @@
-import binascii,time
+import binascii, time
 
-def serialConfig(globalSignalDelay = 92):
+
+def hex2bin(hex_str):
+    return bin(int(hex_str, 16))[2:]
+
+
+def bin2hex(bin_str):
+    return hex(int(bin_str, 2))[2:].upper()
+
+
+def uart_hex_gen(
+    core_info,
+    clk_freq,
+    source_chip,
+    globalSignalDelay,
+    globalSignalWidth,
+    globalSignalBusyMask,
+    Debug_en,
+):
+    clk_en = "FFFFFFFFFFFFFFFE"
+    if clk_freq == 22.5:
+        CLK_PARA = "383CE"
+    elif clk_freq == 24:
+        CLK_PARA = "3838E"
+    elif clk_freq == 48:
+        CLK_PARA = "3C1CF"
+    elif clk_freq == 72:
+        CLK_PARA = "3810E"
+    elif clk_freq == 96:
+        CLK_PARA = "3C0CF"
+    elif clk_freq == 120:
+        CLK_PARA = "3808E"
+    elif clk_freq == 144:
+        CLK_PARA = "44091"
+    elif clk_freq == 168:
+        CLK_PARA = "50094"
+    elif clk_freq == 192:
+        CLK_PARA = "3C04F"
+    elif clk_freq == 216:
+        CLK_PARA = "44051"
+    elif clk_freq == 240:
+        CLK_PARA = "4C053"
+    elif clk_freq == 264:
+        CLK_PARA = "54055"
+    elif clk_freq == 288:
+        CLK_PARA = "5C057"
+    elif clk_freq == 312:
+        CLK_PARA = "64059"
+    elif clk_freq == 336:
+        CLK_PARA = "6C05B"
+    elif clk_freq == 360:
+        CLK_PARA = "3800E"
+    elif clk_freq == 384:
+        CLK_PARA = "3C00F"
+    elif clk_freq == 408:
+        CLK_PARA = "40010"
+    elif clk_freq == 432:
+        CLK_PARA = "44011"
+    elif clk_freq == 456:
+        CLK_PARA = "48012"
+    elif clk_freq == 480:
+        CLK_PARA = "4C013"
+    elif clk_freq == 504:
+        CLK_PARA = "50014"
+    elif clk_freq == 528:
+        CLK_PARA = "54015"
+    elif clk_freq == 552:
+        CLK_PARA = "58016"
+    elif clk_freq == 576:
+        CLK_PARA = "5C017"
+    elif clk_freq == 600:
+        CLK_PARA = "60018"
+    else:
+        raise ValueError("Invalid clk_freq")
+
+    chip_x = bin(source_chip[0])[2:].zfill(5)
+    chip_y = bin(source_chip[1])[2:].zfill(5)
+
+    delay_global_signal = bin(globalSignalDelay)[2:].zfill(10)
+    width_global_signal = bin(globalSignalWidth)[2:].zfill(5)
+    busy_mask_global_signal = bin(globalSignalBusyMask)[2:].zfill(10)
+    Debug = bin(Debug_en)[2:].zfill(1)
+
+    res_bin = (
+        chip_x
+        + chip_y
+        + delay_global_signal
+        + width_global_signal
+        + busy_mask_global_signal
+        + Debug
+    )
+    return clk_en + CLK_PARA + bin2hex(res_bin).zfill(9)
+
+
+def serialConfig(clk_freq=312, globalSignalDelay=92, source_chip=(0, 0)):
     import serial
 
     ser = serial.Serial("/dev/ttyUSB0", 9600)
-    if ser.isOpen():                        # 判断串口是否成功打开
+    if ser.isOpen():  # 判断串口是否成功打开
         print("[Info]  : Serial Open.")
     else:
         print("[Error] : Serial Not Open.")
         return 1
 
-    # b = hex(globalSignalDelay)[2:]
-    b = '{:02x}'.format(globalSignalDelay)
-    uarthex = bytes.fromhex('FF FF FF FF FF FF FF FE 64 05 90 00 ' + b +' F8 C8')   # 312M
-    # uarthex = bytes.fromhex('FF FF FF FF FF FF FF FE 6C 05 B0 00 ' + b +' F8 C8')   # 336M
-    # uarthex = bytes.fromhex('FF FF FF FF FF FF FF FE 38 00 E0 00 ' + b +' F8 C8')   # 360M
-    # uarthex = bytes.fromhex('FF FF FF FF FF FF FF FE 3C 00 F0 00 ' + b +' F8 C8')   # 384M
-    # uarthex = bytes.fromhex('FF FF FF FF FF FF FF FE 40 00 10 00 ' + b +' F8 C8')   # 408M error
-    # uarthex = bytes.fromhex('FF FF FF FF FF FF FF FE 50 01 40 00 ' + b +' F8 C8')   # 504M
-    # uarthex = bytes.fromhex('FF FF FF FF FF FF FF FE 60 01 80 00 ' + b +' F8 C8')   # 600M
-    write_len=ser.write(uarthex)
+    uart_hex = uart_hex_gen(None, 312, source_chip, globalSignalDelay, 31, 100, 0)
+    uart_bytes = bytes.fromhex(uart_hex)
+    write_len = ser.write(uart_bytes)
 
     time.sleep(0.2)
     count = ser.inWaiting()
 
     data = None
     if count > 0:
-        data=ser.read(count)
-        if data!=b'':
+        data = ser.read(count)
+        if data != b"":
             dataStr = str(binascii.b2a_hex(data))[2:-1]
-            print("receive:",dataStr)
+            print("receive:", dataStr)
         else:
             return 2
         # if dataStr != 'fffffffffffffffe640590005cf8c8':
         #     return 3
     if data == None:
         return 4
-    
+
     ser.close()
     if ser.isOpen():
         print("[Error] : Serial Not Close.")
     else:
         print("[Info]  : Serial Close. Uart send Done!")
-    
+
     return 0
 
 
-# FFFFFFFFFFFFFFFE 64 05 9 000 5CF8C8
+if __name__ == "__main__":
+    serialConfig(92, (0, 0))
 
+
+# FFFFFFFFFFFFFFFE 64 05 9 000 5CF8C8
 
 
 # 22.5:FFFFFFFFFFFFFFFE383CE0006450C9

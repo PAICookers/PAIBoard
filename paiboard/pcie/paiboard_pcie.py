@@ -8,6 +8,7 @@ from paiboard.utils.timeMeasure import time_calc_addText, get_original_function
 
 from paiboard.utils.utils_for_uart import *
 
+
 class PAIBoard_PCIe(PAIBoard):
 
     def __init__(
@@ -18,14 +19,17 @@ class PAIBoard_PCIe(PAIBoard):
         output_delay: int = 0,
         batch_size: int = 1,
         backend: str = "PAIBox",
+        source_chip: tuple = (0, 0),
     ):
-        super().__init__(baseDir, timestep, layer_num, output_delay, batch_size, backend)
+        super().__init__(
+            baseDir, timestep, layer_num, output_delay, batch_size, backend, source_chip
+        )
         self.globalSignalDelay, self.oen, self.channel_mask = getBoard_data()
         self.dma_inst = DMA_PCIe(self.oen, self.channel_mask)
 
-    def config(self, oFrmNum: int = 10000):
+    def config(self, oFrmNum: int = 10000, clk_freq: int = 312):
         print("")
-        if serialConfig(globalSignalDelay=self.globalSignalDelay):
+        if serialConfig(clk_freq, self.globalSignalDelay, self.source_chip):
             print("[Error] : Uart can not send, Open and Reset PAICORE.")
             exit()
 
@@ -34,12 +38,10 @@ class PAIBoard_PCIe(PAIBoard):
             self.dma_inst.REGFILE_BASE + self.dma_inst.OFAME_NUM_REG, oFrmNum
         )
 
-        configPath = os.path.join(self.baseDir, "config_cores_all.bin")
-        configFrames = np.fromfile(configPath, dtype="<u8")
         print("----------------------------------")
         print("----------PAICORE CONFIG----------")
         # SendFrameWrap(configFrames)
-        self.dma_inst.send_config_frame(configFrames)
+        self.dma_inst.send_config_frame(self.configFrames)
         print("----------------------------------")
 
     @time_calc_addText("Init          ")
@@ -63,6 +65,6 @@ class PAIBoard_PCIe(PAIBoard):
 
     def inference(self, initFrames, inputFrames):
         self.paicore_init(initFrames)
-        self.dma_inst.send_frame(inputFrames, multi_channel_enable=True)
+        self.dma_inst.send_frame(inputFrames, multi_channel_enable=False)
         # self.dma_inst.send_frame(inputFrames, multi_channel_enable=False)
         return self.dma_inst.recv_frame(self.oFrmNum)
