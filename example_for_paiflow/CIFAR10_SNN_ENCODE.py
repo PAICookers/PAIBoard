@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     correct = 0
     cnt = 0
-    num = 1000
+    num = 1
     mode = 'snn'
 
     for data,target in test_loader:

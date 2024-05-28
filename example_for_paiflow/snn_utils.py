@@ -4,7 +4,7 @@ import json
 import numpy as np
 from hwConfig import Hardware
 import binascii,time
-from timeMeasure import time_calc_addText, get_original_function
+from paiboard.utils.timeMeasure import *
 
 def createFile(filePath):
     if os.path.exists(filePath):

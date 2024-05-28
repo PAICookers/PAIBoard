@@ -2,7 +2,6 @@ from copy import deepcopy
 from hwConfig import Hardware
 import numpy as np
 from frame import Frame, FrameKind, MASK
-from utils import multiCast
 import time
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -12,6 +11,22 @@ POST_COUNTER_MAX = 31
 LUTNUM = 60
 LUTBIAS = 29
 
+def multiCast(coreBase, starId, coreBit, mapping):
+    cores = set()
+    cores.add(coreBase)
+    for i in range(coreBit):
+        if (starId >> i) & 1:
+            tmpCores = deepcopy(cores)
+            star = 1 << i
+            for core in tmpCores:
+                cores.add(core ^ star)
+    if mapping is not None:
+        newCores = set()
+        for core in cores:
+            newCores.add(mapping[core])
+        return newCores
+    else:
+        return cores
 
 def CHIPID(intFrame):
     return Frame.getChipId(intFrame)

@@ -5,7 +5,7 @@ from collections import OrderedDict
 from frame import Frame
 from hwSim import Simulator, GLOBAL_CORE_ID, STARID
 from hwSim import ISSYNC, ISEND
-from timeMeasure import time_calc_addText, get_original_function
+from paiboard.utils.timeMeasure import *
 
 '''-----------------------------------------------------------------------'''
 '''                             RUN NETWORK                               '''
