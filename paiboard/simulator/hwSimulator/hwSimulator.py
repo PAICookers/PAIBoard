@@ -318,8 +318,12 @@ def parseConfig(configPath):
     '''                         parse frames                         '''
     '''--------------------------------------------------------------'''
 
-    with open(configPath,'r') as f:
-        frames = f.readlines()
+    # with open(configPath,'r') as f:
+    #     frames = f.readlines()
+
+    configFrames = np.fromfile(configPath, dtype="<u8")
+    frames = [bin(x)[2:] for x in configFrames]
+
     frameNum = len(frames)
     configs =  dict()
     i = 0
