@@ -43,13 +43,13 @@ if __name__ == "__main__":
     baseDir = "./result/CIFAR10_SNN_ENCODE"
 
     # snn = PAIBoard_SIM(baseDir, timestep, layer_num=layer_num, backend="PAIFLOW")
-    # snn = PAIBoard_PCIe(baseDir, timestep, layer_num=layer_num, backend="PAIFLOW")
-    snn = PAIBoard_Ethernet(baseDir, timestep, layer_num=layer_num, backend="PAIFLOW")
-    snn.config(oFrmNum=1000)
+    snn = PAIBoard_PCIe(baseDir, timestep, layer_num=layer_num, backend="PAIFLOW")
+    # snn = PAIBoard_Ethernet(baseDir, timestep, layer_num=layer_num, backend="PAIFLOW")
+    snn.config(oFrmNum=200)
 
     correct = 0
     cnt = 0
-    num = 100
+    num = 1000
     mode = 'snn'
 
     for data,target in test_loader:
