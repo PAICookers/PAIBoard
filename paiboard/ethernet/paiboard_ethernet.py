@@ -7,6 +7,7 @@ from paiboard.ethernet.global_hw_params import getBoard_data
 
 from paiboard.utils.timeMeasure import time_calc_addText, get_original_function
 
+
 class PAIBoard_Ethernet(PAIBoard):
 
     def __init__(
@@ -17,14 +18,25 @@ class PAIBoard_Ethernet(PAIBoard):
         output_delay: int = 0,
         batch_size: int = 1,
         backend: str = "PAIBox",
+        source_chip: tuple = (0, 0),
     ):
-        super().__init__(baseDir, timestep, layer_num, output_delay, batch_size, backend)
+        super().__init__(
+            baseDir, timestep, layer_num, output_delay, batch_size, backend, source_chip
+        )
         self.dma_inst = DMA_Ethernet()
 
-        self.dma_inst.write_reg(self.dma_inst.REGFILE_BASE + self.dma_inst.CPU2FIFO_CNT, 0)
-        self.dma_inst.write_reg(self.dma_inst.REGFILE_BASE + self.dma_inst.FIFO2SNN_CNT, 0)
-        self.dma_inst.write_reg(self.dma_inst.REGFILE_BASE + self.dma_inst.SNN2FIFO_CNT, 0)
-        self.dma_inst.write_reg(self.dma_inst.REGFILE_BASE + self.dma_inst.FIFO2CPU_CNT, 0)
+        self.dma_inst.write_reg(
+            self.dma_inst.REGFILE_BASE + self.dma_inst.CPU2FIFO_CNT, 0
+        )
+        self.dma_inst.write_reg(
+            self.dma_inst.REGFILE_BASE + self.dma_inst.FIFO2SNN_CNT, 0
+        )
+        self.dma_inst.write_reg(
+            self.dma_inst.REGFILE_BASE + self.dma_inst.SNN2FIFO_CNT, 0
+        )
+        self.dma_inst.write_reg(
+            self.dma_inst.REGFILE_BASE + self.dma_inst.FIFO2CPU_CNT, 0
+        )
 
         self.dma_inst.write_reg(self.dma_inst.REGFILE_BASE + self.dma_inst.DP_RSTN, 0)
         self.dma_inst.write_reg(self.dma_inst.REGFILE_BASE + self.dma_inst.DP_RSTN, 1)
@@ -45,7 +57,6 @@ class PAIBoard_Ethernet(PAIBoard):
         self.dma_inst.send_config_frame(self.configFrames)
         print("----------------------------------")
 
-
     def paicore_status(self):
         cpu2fifo_cnt = self.dma_inst.read_reg(self.dma_inst.CPU2FIFO_CNT)
         fifo2snn_cnt = self.dma_inst.read_reg(self.dma_inst.FIFO2SNN_CNT)
@@ -58,7 +69,7 @@ class PAIBoard_Ethernet(PAIBoard):
         print("snn2fifo_cnt = " + str(snn2fifo_cnt))
         print("fifo2cpu_cnt = " + str(fifo2cpu_cnt))
         print("us_time_tick = " + str(us_time_tick))
-        
+
     @time_calc_addText("Init          ")
     def paicore_init(self, initFrames):
         self.dma_inst.write_reg(self.dma_inst.REGFILE_BASE + self.dma_inst.CTRL_REG, 4)
@@ -66,7 +77,7 @@ class PAIBoard_Ethernet(PAIBoard):
         self.dma_inst.write_reg(self.dma_inst.REGFILE_BASE + self.dma_inst.CTRL_REG, 0)
 
     def inference(self, initFrames, inputFrames):
-        self.paicore_init(initFrames) # may be the bottleneck
+        self.paicore_init(initFrames)  # may be the bottleneck
         # inputFrames = np.concatenate((initFrames, inputFrames))
         # np.save("inputFrames.npy", inputFrames)
         # self.dma_inst.send_frame()

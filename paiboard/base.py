@@ -6,6 +6,7 @@ from paiboard.PAIBoxRuntime.PAIBoxRuntime import PAIBoxRuntime
 from paiboard.utils.timeMeasure import *
 from paiboard.utils.utils_for_frame import frame_np2txt
 
+
 class PAIBoard(object):
     def __init__(
         self,
@@ -15,27 +16,32 @@ class PAIBoard(object):
         output_delay: int = 0,
         batch_size: int = 1,
         backend: str = "PAIBox",
+        source_chip: tuple = (0, 0),
     ):
         self.baseDir = baseDir
-        assert timestep * batch_size <= 256 # batch inference limit
+        assert timestep * batch_size <= 256  # batch inference limit
         self.timestep = timestep
         self.batch_size = batch_size
         self.layer_num = layer_num
         self.output_delay = output_delay
         self.backend = backend
+        self.source_chip = source_chip
 
         self.max_output_frame_num = 0
-
+        print(backend)
         if self.backend == "PAIBox":
             coreInfoPath = os.path.join(self.baseDir, "core_params.json")
-            self.initFrames = PAIBoxRuntime.gen_init_frame(coreInfoPath)
-            self.syncFrames = PAIBoxRuntime.gen_sync_frame(self.timestep + self.layer_num)
+            self.initFrames = PAIBoxRuntime.gen_init_frame(coreInfoPath, self.source_chip)
+            self.syncFrames = PAIBoxRuntime.gen_sync_frame(
+                self.timestep + self.layer_num, self.source_chip
+            )
 
             inputInfoPath = os.path.join(self.baseDir, "input_proj_info.json")
             with open(inputInfoPath, "r", encoding="utf8") as fp:
                 input_proj_info = json.load(fp)
             self.input_frames_info = PAIBoxRuntime.gen_input_frames_info(
-                timestep=self.timestep * self.batch_size, input_proj_info=input_proj_info
+                timestep=self.timestep * self.batch_size,
+                input_proj_info=input_proj_info,
             )
 
             outputInfoPath = os.path.join(self.baseDir, "output_dest_info.json")
@@ -49,18 +55,32 @@ class PAIBoard(object):
 
         elif backend == "PAIFLOW":
             from runtime import loadAuxNet
-            from snn_utils import loadInputFormats, loadOutputFormats, binary_to_uint64,GEN_INIT_SYNC
-            self.baseDir  =os.path.join(self.baseDir, "output")
+            from snn_utils import (
+                loadInputFormats,
+                loadOutputFormats,
+                binary_to_uint64,
+                GEN_INIT_SYNC,
+            )
+
+            self.baseDir = os.path.join(self.baseDir, "output")
             auxNetDir = os.path.join(self.baseDir, "auxNet")
             self.preNet, self.postNet = loadAuxNet(auxNetDir)
 
-            self.frameFormats, self.frameNums, self.inputNames = loadInputFormats(self.baseDir)
-            self.initFrames,self.syncFrames = GEN_INIT_SYNC(self.frameFormats, self.frameNums)
+            self.frameFormats, self.frameNums, self.inputNames = loadInputFormats(
+                self.baseDir
+            )
+            self.initFrames, self.syncFrames = GEN_INIT_SYNC(
+                self.frameFormats, self.frameNums
+            )
             vectorized_binary_to_uint64 = np.vectorize(binary_to_uint64)
-            self.frameFormats = vectorized_binary_to_uint64(self.frameFormats[self.frameNums[0]:-1])
-            
-            self.outDict, self.shapeDict, self.scaleDict, self.mapper = loadOutputFormats(self.baseDir)
-        
+            self.frameFormats = vectorized_binary_to_uint64(
+                self.frameFormats[self.frameNums[0] : -1]
+            )
+
+            self.outDict, self.shapeDict, self.scaleDict, self.mapper = (
+                loadOutputFormats(self.baseDir)
+            )
+
             self.coreType = "offline"
 
         configPath = os.path.join(self.baseDir, "config_cores_all.bin")
@@ -71,7 +91,7 @@ class PAIBoard(object):
     def config(self, *args, **kwargs):
         # dma init & send config frame
         raise NotImplementedError
-    
+
     def inference(self, *args, **kwargs):
         # send work frame and recvive output frame
         raise NotImplementedError
@@ -86,7 +106,7 @@ class PAIBoard(object):
                 self.batch_ts = input_spike[0].shape[0]
                 assert self.batch_ts == input_spike[i].shape[0]
                 self.syncFrames = PAIBoxRuntime.gen_sync_frame(
-                    self.batch_ts + self.layer_num
+                    self.batch_ts + self.layer_num, self.source_chip
                 )
             spikeFrame = np.array([], dtype=np.uint64)
             for i in range(len(input_spike)):
@@ -103,7 +123,7 @@ class PAIBoard(object):
                     and self.batch_ts % self.timestep == 0
                 )
                 self.syncFrames = PAIBoxRuntime.gen_sync_frame(
-                    self.batch_ts + self.layer_num
+                    self.batch_ts + self.layer_num, self.source_chip
                 )
             spikeFrame = PAIBoxRuntime.encode(input_spike, ifi[0])
         return spikeFrame
@@ -153,18 +173,18 @@ class PAIBoard(object):
         elif self.backend == "PAIFLOW":
             from runtime import runPreNetWrap
             from snn_utils import Tensor2FrameWrap
+
             x = runPreNetWrap(self.preNet, self.inputNames, TimeMeasure, *input_spike)
-            spikeFrame = Tensor2FrameWrap(x, self.frameFormats,self.inputNames, TimeMeasure)
-     
+            spikeFrame = Tensor2FrameWrap(
+                x, self.frameFormats, self.inputNames, TimeMeasure
+            )
+
         inputFrames = np.concatenate((spikeFrame, self.syncFrames))
-        outputFrames = self.inference(
-            self.initFrames,
-            inputFrames
-        )
+        outputFrames = self.inference(self.initFrames, inputFrames)
         if outputFrames.shape[0] > self.max_output_frame_num:
             self.max_output_frame_num = outputFrames.shape[0]
-        print(self.max_output_frame_num, end="") 
-        # frame_np2txt(outputFrames, self.baseDir + "/outputFrames.txt")
+        # print(self.max_output_frame_num, end="")
+        frame_np2txt(outputFrames, self.baseDir + "/outputFrames.txt")
 
         if self.backend == "PAIBox":
             t3 = time.time()
@@ -178,11 +198,21 @@ class PAIBoard(object):
             # pred = np.argmax(spike_out)
         elif self.backend == "PAIFLOW":
             from snn_utils import Frame2TensorWrap
+
             outputFrames_list = []
             for i in range(len(outputFrames)):
                 out_str = bin(outputFrames[i])
                 outputFrames_list.append(out_str[2:])
-            outData, outputSpike = Frame2TensorWrap(outputFrames_list, self.outDict, self.shapeDict, self.scaleDict, self.mapper, self.timestep, self.coreType, TimeMeasure)
+            outData, outputSpike = Frame2TensorWrap(
+                outputFrames_list,
+                self.outDict,
+                self.shapeDict,
+                self.scaleDict,
+                self.mapper,
+                self.timestep,
+                self.coreType,
+                TimeMeasure,
+            )
         return outputSpike
 
     def record_time(self, full_time):
