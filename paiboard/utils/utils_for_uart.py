@@ -133,8 +133,9 @@ def serialConfig(clk_freq=312, globalSignalDelay=92, source_chip=(0, 0)):
 
 
 if __name__ == "__main__":
-    serialConfig(92, (0, 0))
-
+    # serialConfig(92, (0, 0))
+    uart_hex = uart_hex_gen(None, 192, (0,0), 92, 31, 100, 0)
+    print(uart_hex)
 
 # FFFFFFFFFFFFFFFE 64 05 9 000 5CF8C8
 
