@@ -183,8 +183,7 @@ class PAIBoard(object):
         if outputFrames.shape[0] > self.max_output_frame_num:
             self.max_output_frame_num = outputFrames.shape[0]
         # print(self.max_output_frame_num, end="")
-        frame_np2txt(outputFrames, self.baseDir + "/outputFrames.txt")
-
+        # frame_np2txt(np.sort(outputFrames), self.baseDir + "/outputFrames.txt")
         if self.backend == "PAIBox":
             t3 = time.time()
             outputSpike = self.genOutputSpike(

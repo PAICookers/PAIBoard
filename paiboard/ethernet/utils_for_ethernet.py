@@ -84,4 +84,5 @@ def Ethernet_recv(tcpCliSock, send_frame, buffer_num, oFrmNum, read_reg=False, r
     else:
         outputFrames = np.delete(outputFrames, np.where(outputFrames == 0))
         outputFrames = np.delete(outputFrames, np.where(outputFrames == 18446744073709551615))
+        # outputFrames = np.unique(outputFrames)
     return outputFrames
