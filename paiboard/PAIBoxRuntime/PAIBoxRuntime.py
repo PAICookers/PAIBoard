@@ -18,9 +18,7 @@ MAX_TIMESLOTS = 255
 
 class PAIBoxRuntime:
     @staticmethod
-    def encode(
-        data: DataArrayType, iframe_info: FrameArrayType
-    ) -> FrameArrayType:
+    def encode(data: DataArrayType, iframe_info: FrameArrayType) -> FrameArrayType:
         """Encode input data with common information of input frames.
 
         Args:
@@ -37,8 +35,7 @@ class PAIBoxRuntime:
     @staticmethod
     def gen_input_frames_info(
         timestep: int, *, input_proj_info: Dict[str, Any]
-    ) -> List[FrameArrayType]:
-        ...
+    ) -> List[FrameArrayType]: ...
 
     @overload
     @staticmethod
@@ -49,8 +46,7 @@ class PAIBoxRuntime:
         rid: Optional[RIdLike] = None,
         timeslots: Optional[ArrayType] = None,
         axons: Optional[ArrayType] = None,
-    ) -> FrameArrayType:
-        ...
+    ) -> FrameArrayType: ...
 
     @staticmethod
     def gen_input_frames_info(
@@ -91,7 +87,9 @@ class PAIBoxRuntime:
 
                 ts.clear()
                 for i in range(timestep):
-                    ts.extend([addr + (i * interval) for addr in inode["tick_relative"]])
+                    ts.extend(
+                        [addr + (i * interval) for addr in inode["tick_relative"]]
+                    )
 
                 inode["tick_relative"] = ts
                 # addr_axon: [0-X] -> [0-X]*timestep
@@ -133,8 +131,7 @@ class PAIBoxRuntime:
         oframes: FrameArrayType,
         oframe_infos: FrameArrayType,
         flatten: bool = False,
-    ) -> NDArray[np.uint8]:
-        ...
+    ) -> NDArray[np.uint8]: ...
 
     @overload
     @staticmethod
@@ -143,8 +140,7 @@ class PAIBoxRuntime:
         oframes: FrameArrayType,
         oframe_infos: List[FrameArrayType],
         flatten: bool = False,
-    ) -> List[NDArray[np.uint8]]:
-        ...
+    ) -> List[NDArray[np.uint8]]: ...
 
     @staticmethod
     def decode_spike_less1152(
@@ -225,8 +221,7 @@ class PAIBoxRuntime:
     @staticmethod
     def gen_output_frames_info(
         timestep: int, *, output_dest_info: Dict[str, Any]
-    ) -> List[FrameArrayType]:
-        ...
+    ) -> List[FrameArrayType]: ...
 
     @overload
     @staticmethod
@@ -236,8 +231,7 @@ class PAIBoxRuntime:
         core_coord: CoordLike,
         rid: RIdLike,
         axons: ArrayType,
-    ) -> FrameArrayType:
-        ...
+    ) -> FrameArrayType: ...
 
     @staticmethod
     def gen_output_frames_info(
@@ -280,9 +274,7 @@ class PAIBoxRuntime:
                     # addr_axon: [0-X] -> [0-X]*timestep
                     dest_on_coord["addr_axon"] *= timestep
 
-                    temp = OfflineWorkFrame1._frame_dest_reorganized(
-                        dest_on_coord
-                    )
+                    temp = OfflineWorkFrame1._frame_dest_reorganized(dest_on_coord)
                     temp.sort()
                     frames_of_dest.append(temp)
                 frames_of_dest = np.hstack(frames_of_dest)
@@ -306,7 +298,29 @@ class PAIBoxRuntime:
 
         oframes_info.sort()
         return oframes_info
-    
+
+    # @staticmethod
+    # def gen_init_frame(coreInfoPath, source_chip):
+    #     with open(coreInfoPath, "r", encoding="utf8") as fp:
+    #         core_params = json.load(fp)
+
+    #     core_coord_list = []
+    #     for core_addr in core_params:
+    #         if isinstance(eval(core_addr), tuple):
+    #             core_coord = Coord(*eval(core_addr))
+    #         else:
+    #             core_coord = Coord.from_addr(int(core_addr))
+    #         # todo : chip_coord
+    #         # core_init_frame = OfflineFrameGen.gen_magic_init_frame(
+    #         #     Coord(source_chip[0], source_chip[1]), core_coord
+    #         # )
+    #         # initFrames = np.concatenate((initFrames, core_init_frame))
+    #         core_coord_list.append(core_coord)
+    #     # print(core_coord_list)
+    #     # exit()
+    #     initFrames_p0,initFrames_p1 = OfflineFrameGen.gen_magic_init_frame_core_list(Coord(source_chip[0], source_chip[1]), core_coord_list)
+    #     return [initFrames_p0,initFrames_p1]
+
     @staticmethod
     def gen_init_frame(coreInfoPath, source_chip):
         with open(coreInfoPath, "r", encoding="utf8") as fp:
@@ -317,11 +331,15 @@ class PAIBoxRuntime:
             # core_coord = Coord.from_addr(int(core_addr))
             core_coord = Coord(*eval(core_addr))
             # todo : chip_coord
-            core_init_frame = OfflineFrameGen.gen_magic_init_frame(Coord(source_chip[0], source_chip[1]), core_coord)
+            core_init_frame = OfflineFrameGen.gen_magic_init_frame(
+                Coord(source_chip[0], source_chip[1]), core_coord
+            )
             initFrames = np.concatenate((initFrames, core_init_frame))
         return initFrames
 
     @staticmethod
     def gen_sync_frame(n_sync: int, source_chip):
         # todo : chip_coord
-        return OfflineFrameGen.gen_work_frame2(Coord(source_chip[0], source_chip[1]), n_sync).value
+        return OfflineFrameGen.gen_work_frame2(
+            Coord(source_chip[0], source_chip[1]), n_sync
+        ).value
