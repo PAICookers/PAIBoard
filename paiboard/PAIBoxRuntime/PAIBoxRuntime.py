@@ -332,9 +332,9 @@ class PAIBoxRuntime:
             core_coord = Coord(*eval(core_addr))
             # todo : chip_coord
             core_init_frame = OfflineFrameGen.gen_magic_init_frame(
-                Coord(source_chip[0], source_chip[1]), core_coord
+                Coord(source_chip[0], source_chip[1]), core_coord,False
             )
-            initFrames = np.concatenate((initFrames, core_init_frame))
+            initFrames = np.concatenate((initFrames, core_init_frame[0],core_init_frame[1]))
         return initFrames
 
     @staticmethod
