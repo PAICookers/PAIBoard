@@ -1,3 +1,4 @@
+import time
 import numpy as np
 
 from paiboard.dma.base import DMA_base
@@ -22,10 +23,16 @@ class DMA_Ethernet(DMA_base):
         return Ethernet_recv(self.tcpCliSock, None, self.buffer_num, oFrmNum=1,read_reg=True, reg_addr=reg_addr)[0]
 
     def write_reg(self, addr, data):
-
         configFrames = np.array([addr, data], dtype=np.uint64)
         Ethernet_send(self.tcpCliSock, "WRITE REG", configFrames, self.buffer_num)
 
+    def chip_rst(self):
+        Ethernet_send(self.tcpCliSock, "CHIP RST", None, self.buffer_num)
+
+    def chip_uart(self, uart_np):
+        Ethernet_send(self.tcpCliSock, "CHIP UART", uart_np, self.buffer_num)
+
+    # not timemeasure
     def send_config_frame(self, send_data):
         Ethernet_send(self.tcpCliSock, "SEND", send_data, self.buffer_num)
 

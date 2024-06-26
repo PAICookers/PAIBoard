@@ -25,6 +25,9 @@ class PAIBoard_SIM(PAIBoard):
         configPath = os.path.join(self.baseDir, "config_cores_all.bin")
         self.simulator = setOnChipNetwork(configPath, TimestepVerbose)
 
+    def chip_rst(self):
+        print("PAIBoard_SIM Not implemented Chip Reset")
+
     def paicore_status(self):
         print("PAIBoard_SIM Not implemented Status")
 

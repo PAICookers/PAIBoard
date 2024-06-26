@@ -31,14 +31,21 @@ def Ethernet_send(tcpCliSock, mode, send_frame, buffer_num):
         header_frame = np.array([2], dtype=np.uint64)
     elif mode == "READ REG":
         header_frame = np.array([3], dtype=np.uint64)
-    elif mode == "QUIT":
+    elif mode == "CHIP RST":
         header_frame = np.array([4] * buffer_num, dtype=np.uint64)
+        send_buffer = header_frame.tobytes()
+        tcpCliSock.sendall(send_buffer)
+        return
+    elif mode == "CHIP UART":
+        header_frame = np.array([5], dtype=np.uint64)
+    elif mode == "QUIT":
+        header_frame = np.array([99] * buffer_num, dtype=np.uint64)
         send_buffer = header_frame.tobytes()
         tcpCliSock.sendall(send_buffer)
         return
     else:
         print("ERROR")
-        exit()
+        raise ValueError
     
     num_frame = np.array([send_frame.size], dtype=np.uint64)
     send_frame = np.concatenate((header_frame, num_frame, send_frame))

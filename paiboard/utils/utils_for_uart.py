@@ -1,5 +1,5 @@
 import binascii, time
-
+import numpy as np
 
 def hex2bin(hex_str):
     return bin(int(hex_str, 16))[2:]
@@ -8,15 +8,22 @@ def hex2bin(hex_str):
 def bin2hex(bin_str):
     return hex(int(bin_str, 2))[2:].upper()
 
+def uart_np_gen(uart_hex, chip_num):
+    uart_hex_list = []
+    uart_hex_list.append(chip_num)
+    for i in range(0, len(uart_hex), 2):
+        uart_hex_list.append(int("0x"+uart_hex[i:i + 2],16))
+    uart_np = np.array(uart_hex_list, dtype=np.uint8)
+    return uart_np
 
 def uart_hex_gen(
-    core_info,
-    clk_freq,
-    source_chip,
-    globalSignalDelay,
-    globalSignalWidth,
-    globalSignalBusyMask,
-    Debug_en,
+    core_info=None,
+    clk_freq=240,
+    source_chip=(0, 0),
+    globalSignalDelay=0,
+    globalSignalWidth=31,
+    globalSignalBusyMask=100,
+    Debug_en=0,
 ):
     clk_en = "FFFFFFFFFFFFFFFE"
     if clk_freq == 22.5:
@@ -134,8 +141,22 @@ def serialConfig(clk_freq=312, globalSignalDelay=92, source_chip=(0, 0)):
 
 if __name__ == "__main__":
     # serialConfig(92, (0, 0))
-    uart_hex = uart_hex_gen(None, 192, (0,0), 92, 31, 100, 0)
+    uart_hex = uart_hex_gen(
+        None,
+        clk_freq=312,
+        source_chip=(0, 0),
+        globalSignalDelay=92,
+        globalSignalWidth=31,
+        globalSignalBusyMask=100,
+        Debug_en=0,
+    )
     print(uart_hex)
+
+    # uart_hex = "FFFFFFFFFFFFFFFE640590005CF8C8"
+    # uart_hex_list = []
+    # for i in range(0, len(uart_hex), 2):
+    #     uart_hex_list.append(int("0x"+uart_hex[i:i + 2],16))
+    # print(uart_hex_list)
 
 # FFFFFFFFFFFFFFFE 64 05 9 000 5CF8C8
 

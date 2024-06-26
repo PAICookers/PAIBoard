@@ -4,8 +4,9 @@ import os
 from paiboard.base import PAIBoard
 from paiboard.ethernet.dma_ethernet import DMA_Ethernet
 from paiboard.ethernet.global_hw_params import getBoard_data
-
 from paiboard.utils.timeMeasure import time_calc_addText, get_original_function
+
+from paiboard.utils.utils_for_uart import *
 
 
 class PAIBoard_Ethernet(PAIBoard):
@@ -44,6 +45,13 @@ class PAIBoard_Ethernet(PAIBoard):
         # TODO : Need to check the value of oen and channel_mask
         # self.dma_inst.write_reg(self.dma_inst.REGFILE_BASE + self.dma_inst.OEN, 0)
         # self.dma_inst.write_reg(self.dma_inst.REGFILE_BASE + self.dma_inst.CHANNEL_MASK, 0)
+
+    def chip_init(self, chip_id_list):
+        self.dma_inst.chip_rst()
+        for index, source_chip in enumerate(chip_id_list):
+            uart_hex = uart_hex_gen(source_chip=source_chip)
+            uart_np = uart_np_gen(uart_hex, index)
+            self.dma_inst.chip_uart(uart_np)
 
     def config(self, oFrmNum: int = 10000, send=True):
 
