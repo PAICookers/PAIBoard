@@ -82,7 +82,7 @@ class PAIBoard(object):
 
             self.coreType = "offline"
 
-        configPath = os.path.join(self.baseDir, "config_cores_all.bin")
+        configPath = os.path.join(self.baseDir, "config_all.bin")
         self.configFrames = np.fromfile(configPath, dtype="<u8")
 
         self.dma_inst = None
@@ -183,7 +183,8 @@ class PAIBoard(object):
         if outputFrames.shape[0] > self.max_output_frame_num:
             self.max_output_frame_num = outputFrames.shape[0]
         # print(self.max_output_frame_num, end="")
-        # frame_np2txt(np.sort(outputFrames), self.baseDir + "/outputFrames.txt")
+        # frame_np2txt(outputFrames, self.baseDir + "/outputFrames.txt")
+        # frame_np2txt(np.sort(outputFrames), self.baseDir + "/outputFrames_sort.txt")
         if self.backend == "PAIBox":
             t3 = time.time()
             outputSpike = self.genOutputSpike(
