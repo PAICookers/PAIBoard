@@ -18,6 +18,8 @@ if __name__ == "__main__":
     snn = PAIBoard_SIM(baseDir, timestep, layer_num=layer_num)
     # snn = PAIBoard_PCIe(baseDir, timestep, layer_num=layer_num)
     # snn = PAIBoard_Ethernet(baseDir, timestep, layer_num=layer_num)
+
+    snn.chip_init([(1, 0), (0, 0), (1, 1), (0, 1)])
     snn.config(oFrmNum=40)
 
     dataset_root = os.path.join(os.path.expanduser("~"), "work/99_datasets/MNIST/raw")
@@ -33,8 +35,7 @@ if __name__ == "__main__":
 
         t1 = time.time()
         output_spike_dict = snn(
-            [input_spike, input_spike], TimeMeasure=True
-        )
+            [input_spike, input_spike])
         t2 = time.time()
 
         snn.record_time(t2 - t1)

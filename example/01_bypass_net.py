@@ -12,6 +12,8 @@ if __name__ == "__main__":
     snn = PAIBoard_SIM(baseDir, timestep, layer_num=layer_num)
     # snn = PAIBoard_PCIe(baseDir, timestep, layer_num=layer_num)
     # snn = PAIBoard_Ethernet(baseDir, timestep, layer_num=layer_num)
+
+    snn.chip_init([(1, 0), (0, 0), (1, 1), (0, 1)])
     snn.config(oFrmNum=20)
 
     test_num = 100
@@ -19,7 +21,7 @@ if __name__ == "__main__":
         input_spike = np.eye(timestep, dtype=np.int8)
 
         t1 = time.time()
-        output_spike = snn(input_spike, TimeMeasure=False)
+        output_spike = snn(input_spike)
         t2 = time.time()
 
         snn.record_time(t2 - t1)

@@ -19,6 +19,8 @@ if __name__ == "__main__":
     snn = PAIBoard_SIM(baseDir, timestep, layer_num=layer_num, batch_size=batch)
     # snn = PAIBoard_PCIe(baseDir, timestep, layer_num=layer_num, batch_size=batch)
     # snn = PAIBoard_Ethernet(baseDir, timestep, layer_num=layer_num, batch_size=batch)
+
+    snn.chip_init([(1, 0), (0, 0), (1, 1), (0, 1)])
     snn.config(oFrmNum=timestep * batch * 10)
 
     dataset_root = os.path.join(os.path.expanduser("~"), "work/99_datasets/MNIST/raw")
@@ -41,7 +43,7 @@ if __name__ == "__main__":
             batch * timestep, 1, 28, 28
         )
 
-        output_spike = snn(input_spike, TimeMeasure=True)
+        output_spike = snn(input_spike)
 
         output_spike = output_spike.reshape(batch, timestep, -1)
         pred = np.argmax(output_spike.sum(axis=1), axis=1)

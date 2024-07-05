@@ -35,7 +35,7 @@ if __name__ == "__main__":
         # snn.config(oFrmNum=oFrmNum, send=False)
 
         input_spike = np.ones((timestep, 1000), dtype=np.int8)
-        output_spike = snn(input_spike, TimeMeasure=False)
+        output_spike = snn(input_spike)
         print(output_spike.sum())
 
         snn.paicore_status()
