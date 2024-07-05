@@ -19,10 +19,9 @@ class PAIBoard_Ethernet(PAIBoard):
         output_delay: int = 0,
         batch_size: int = 1,
         backend: str = "PAIBox",
-        source_chip: tuple = (0, 0),
     ):
         super().__init__(
-            baseDir, timestep, layer_num, output_delay, batch_size, backend, source_chip
+            baseDir, timestep, layer_num, output_delay, batch_size, backend
         )
         self.dma_inst = DMA_Ethernet()
 
@@ -49,7 +48,7 @@ class PAIBoard_Ethernet(PAIBoard):
     def chip_init(self, chip_id_list):
         self.dma_inst.chip_rst()
         for index, source_chip in enumerate(chip_id_list):
-            uart_hex = uart_hex_gen(source_chip=source_chip)
+            uart_hex = uart_hex_gen(clk_freq=240, source_chip=source_chip)
             uart_np = uart_np_gen(uart_hex, index)
             self.dma_inst.chip_uart(uart_np)
 

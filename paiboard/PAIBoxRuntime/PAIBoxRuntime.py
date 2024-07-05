@@ -81,6 +81,7 @@ class PAIBoxRuntime:
             for inode in input_proj_info.values():
                 raw_ts = inode["tick_relative"]
                 if timestep * max(raw_ts) > MAX_TIMESLOTS:
+                    print(timestep * max(raw_ts))
                     raise ValueError
 
                 interval = max(raw_ts) - min(raw_ts) + 1
@@ -322,12 +323,10 @@ class PAIBoxRuntime:
     #     return [initFrames_p0,initFrames_p1]
 
     @staticmethod
-    def gen_init_frame(coreInfoPath, source_chip):
-        with open(coreInfoPath, "r", encoding="utf8") as fp:
-            all_params = json.load(fp)
+    def gen_init_frame(all_core_params):
         initFrames = np.array([], dtype=np.uint64)
-        for chip_addr in all_params:
-            core_params = all_params[chip_addr]
+        for chip_addr in all_core_params:
+            core_params = all_core_params[chip_addr]
             for core_addr in core_params:
                 chip_coord = Coord(*eval(chip_addr))
                 core_coord = Coord(*eval(core_addr))

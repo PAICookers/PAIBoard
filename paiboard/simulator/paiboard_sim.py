@@ -15,18 +15,17 @@ class PAIBoard_SIM(PAIBoard):
         output_delay: int = 0,
         batch_size: int = 1,
         backend: str = "PAIBox",
-        source_chip: tuple = (0, 0),
     ):
         super().__init__(
-            baseDir, timestep, layer_num, output_delay, batch_size, backend, source_chip
+            baseDir, timestep, layer_num, output_delay, batch_size, backend
         )
 
     def config(self, oFrmNum: int = 10000, TimestepVerbose: bool = False):
-        configPath = os.path.join(self.baseDir, "config_cores_all.bin")
+        configPath = os.path.join(self.baseDir, "config_all.bin")
         self.simulator = setOnChipNetwork(configPath, TimestepVerbose)
 
-    def chip_rst(self):
-        print("PAIBoard_SIM Not implemented Chip Reset")
+    def chip_init(self, chip_id_list):
+        print("PAIBoard_SIM Not implemented Chip Init")
 
     def paicore_status(self):
         print("PAIBoard_SIM Not implemented Status")

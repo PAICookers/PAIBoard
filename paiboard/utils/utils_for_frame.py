@@ -1,5 +1,17 @@
 import os
 import numpy as np
+from paicorelib.framelib.frame_defs import FrameFormat as FF
+
+def frame_remove(frames, expected_type):  
+    """
+        remove the frames that are not the expected type.
+    """ 
+
+    headers = (frames >> FF.GENERAL_HEADER_OFFSET) & FF.GENERAL_HEADER_MASK
+    not_expected_type_index = np.where(headers != expected_type)[0]
+    if not_expected_type_index.size > 0:
+        print(not_expected_type_index)
+    return np.delete(frames, not_expected_type_index)
 
 def frame_np2txt(frameBuffer, txt_path, frameSplit = True):
     with open(txt_path, 'w') as f:

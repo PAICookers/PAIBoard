@@ -4,7 +4,9 @@ import json
 
 from paiboard.PAIBoxRuntime.PAIBoxRuntime import PAIBoxRuntime
 from paiboard.utils.timeMeasure import *
-from paiboard.utils.utils_for_frame import frame_np2txt
+
+from paicorelib.framelib.frame_defs import FrameHeader as FH
+from paiboard.utils.utils_for_frame import frame_np2txt, frame_remove
 
 
 class PAIBoard(object):
@@ -16,8 +18,21 @@ class PAIBoard(object):
         output_delay: int = 0,
         batch_size: int = 1,
         backend: str = "PAIBox",
-        source_chip: tuple = (0, 0),
     ):
+
+        """PAIBoard base module. Inclue method of Encode and Decode.
+
+        Args:
+            - baseDir     : Output files from Toolchain. (PAIBox/PAIFLOW)
+            - timestep    : timestep for your network.
+            - layer_num   : network layer in paicore.
+            - output_delay: delay for output frame.
+            - batch_size  : batch size for inference.
+            - backend     : Choose backend from PAIBox/PAIFLOW.
+            - source_chip : which chip you send sync frame to.
+
+        """
+
         self.baseDir = baseDir
         assert timestep * batch_size <= 256  # batch inference limit
         self.timestep = timestep
@@ -25,12 +40,17 @@ class PAIBoard(object):
         self.layer_num = layer_num
         self.output_delay = output_delay
         self.backend = backend
-        self.source_chip = source_chip
 
         self.max_output_frame_num = 0
         if self.backend == "PAIBox":
-            coreInfoPath = os.path.join(self.baseDir, "core_params.json")
-            self.initFrames = PAIBoxRuntime.gen_init_frame(coreInfoPath, self.source_chip)
+            all_coreInfoPath = os.path.join(self.baseDir, "core_params.json")
+            with open(all_coreInfoPath, "r", encoding="utf8") as fp:
+                all_core_params = json.load(fp)
+            for chip_addr in all_core_params:
+                chip_coord = eval(chip_addr)
+                self.source_chip = chip_coord # first chip_addr is source
+                break
+            self.initFrames = PAIBoxRuntime.gen_init_frame(all_core_params)
             self.syncFrames = PAIBoxRuntime.gen_sync_frame(
                 self.timestep + self.layer_num, self.source_chip
             )
@@ -161,7 +181,8 @@ class PAIBoard(object):
             return outputSpike_dict
         return outputSpike
 
-    def __call__(self, input_spike, TimeMeasure=False):
+    def __call__(self, input_spike):
+        TimeMeasure=False
         if self.backend == "PAIBox":
             t1 = time.time()
             spikeFrame = self.genSpikeFrame(input_spike, self.input_frames_info)
@@ -180,6 +201,7 @@ class PAIBoard(object):
 
         inputFrames = np.concatenate((spikeFrame, self.syncFrames))
         outputFrames = self.inference(self.initFrames, inputFrames)
+        outputFrames = frame_remove(outputFrames, FH.WORK_TYPE1)
         if outputFrames.shape[0] > self.max_output_frame_num:
             self.max_output_frame_num = outputFrames.shape[0]
         # print(self.max_output_frame_num, end="")
