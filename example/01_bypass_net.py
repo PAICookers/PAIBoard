@@ -8,7 +8,7 @@ from paiboard import PAIBoard_Ethernet
 if __name__ == "__main__":
     timestep = 3
     layer_num = 0
-    baseDir = "./result/bypass_net/01_bypass_net"
+    baseDir = "./result/bypass_net/bypass_net_1core"
     snn = PAIBoard_SIM(baseDir, timestep, layer_num=layer_num)
     # snn = PAIBoard_PCIe(baseDir, timestep, layer_num=layer_num)
     # snn = PAIBoard_Ethernet(baseDir, timestep, layer_num=layer_num)

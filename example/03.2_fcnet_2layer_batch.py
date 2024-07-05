@@ -15,9 +15,9 @@ if __name__ == "__main__":
     timestep = 8
     batch = 32
     layer_num = 1
-    baseDir = "./result/fc_net/03_fcnet_2layer/"
-    # snn = PAIBoard_SIM(baseDir, timestep, layer_num=layer_num, batch_size=batch)
-    snn = PAIBoard_PCIe(baseDir, timestep, layer_num=layer_num, batch_size=batch)
+    baseDir = "./result/base_example/fcnet_2layer/"
+    snn = PAIBoard_SIM(baseDir, timestep, layer_num=layer_num, batch_size=batch)
+    # snn = PAIBoard_PCIe(baseDir, timestep, layer_num=layer_num, batch_size=batch)
     # snn = PAIBoard_Ethernet(baseDir, timestep, layer_num=layer_num, batch_size=batch)
     snn.config(oFrmNum=timestep * batch * 10)
 
