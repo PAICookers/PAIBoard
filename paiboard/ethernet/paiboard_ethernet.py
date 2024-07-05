@@ -84,8 +84,9 @@ class PAIBoard_Ethernet(PAIBoard):
         self.dma_inst.send_config_frame(initFrames)
         self.dma_inst.write_reg(self.dma_inst.REGFILE_BASE + self.dma_inst.CTRL_REG, 0)
 
-    def inference(self, initFrames, inputFrames):
-        self.paicore_init(initFrames)  # may be the bottleneck
+    def inference(self, initFrames, inputFrames, init):
+        if init:
+            self.paicore_init(initFrames)  # may be the bottleneck
         # from paiboard.utils.utils_for_frame import frame_np2txt
         # frame_np2txt(inputFrames, "inputFrames.txt",frameSplit=False)
         return self.dma_inst.recv_frame(inputFrames, self.oFrmNum)

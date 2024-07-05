@@ -19,7 +19,6 @@ class PAIBoard(object):
         batch_size: int = 1,
         backend: str = "PAIBox",
     ):
-
         """PAIBoard base module. Inclue method of Encode and Decode.
 
         Args:
@@ -48,7 +47,7 @@ class PAIBoard(object):
                 all_core_params = json.load(fp)
             for chip_addr in all_core_params:
                 chip_coord = eval(chip_addr)
-                self.source_chip = chip_coord # first chip_addr is source
+                self.source_chip = chip_coord  # first chip_addr is source
                 break
             self.initFrames = PAIBoxRuntime.gen_init_frame(all_core_params)
             self.syncFrames = PAIBoxRuntime.gen_sync_frame(
@@ -58,8 +57,18 @@ class PAIBoard(object):
             inputInfoPath = os.path.join(self.baseDir, "input_proj_info.json")
             with open(inputInfoPath, "r", encoding="utf8") as fp:
                 input_proj_info = json.load(fp)
+
+            lcn_list = np.array([], dtype=np.int32)
+            for proj in input_proj_info.values():
+                lcn_list = np.append(lcn_list, int(proj["lcn"]))
+            lcn_list = np.append(lcn_list, 4)
+            self.split_timestep = self.timestep
+            if batch_size == 1:
+                while max(lcn_list) * self.split_timestep > 256:
+                    self.split_timestep = int(self.split_timestep / 2)
+
             self.input_frames_info = PAIBoxRuntime.gen_input_frames_info(
-                timestep=self.timestep * self.batch_size,
+                timestep=self.split_timestep * self.batch_size,
                 input_proj_info=input_proj_info,
             )
 
@@ -115,7 +124,11 @@ class PAIBoard(object):
         # send work frame and recvive output frame
         raise NotImplementedError
 
-    def genSpikeFrame(self, input_spike, ifi):
+    def genSpikeFrame(self, input_spike, ifi, init=True):
+        if init:
+            sync_num = self.split_timestep + self.layer_num
+        else:
+            sync_num = self.split_timestep
         if isinstance(input_spike, list):
             if self.batch_size > 1:
                 # todo: batch_size for multiple input port
@@ -124,9 +137,7 @@ class PAIBoard(object):
                 # todo what happen if two(or more) input's batch different?
                 self.batch_ts = input_spike[0].shape[0]
                 assert self.batch_ts == input_spike[i].shape[0]
-                self.syncFrames = PAIBoxRuntime.gen_sync_frame(
-                    self.batch_ts + self.layer_num, self.source_chip
-                )
+                sync_num = self.batch_ts + self.layer_num
             spikeFrame = np.array([], dtype=np.uint64)
             for i in range(len(input_spike)):
                 sf = PAIBoxRuntime.encode(input_spike[i], ifi[i])
@@ -141,10 +152,9 @@ class PAIBoard(object):
                     self.batch_ts <= self.timestep * self.batch_size
                     and self.batch_ts % self.timestep == 0
                 )
-                self.syncFrames = PAIBoxRuntime.gen_sync_frame(
-                    self.batch_ts + self.layer_num, self.source_chip
-                )
+                sync_num = self.batch_ts + self.layer_num
             spikeFrame = PAIBoxRuntime.encode(input_spike, ifi[0])
+        self.syncFrames = PAIBoxRuntime.gen_sync_frame(sync_num, self.source_chip)
         return spikeFrame
 
     def genOutputSpike(self, outputFrames, ofi, ts):
@@ -181,11 +191,11 @@ class PAIBoard(object):
             return outputSpike_dict
         return outputSpike
 
-    def __call__(self, input_spike):
-        TimeMeasure=False
+    def split_inference(self, input_spike, init=True):
+        TimeMeasure = False
         if self.backend == "PAIBox":
             t1 = time.time()
-            spikeFrame = self.genSpikeFrame(input_spike, self.input_frames_info)
+            spikeFrame = self.genSpikeFrame(input_spike, self.input_frames_info, init)
             t2 = time.time()
             time_dict["genSpikeFrame "] = (
                 time_dict["genSpikeFrame "] + (t2 - t1) * 1000 * 1000
@@ -200,7 +210,7 @@ class PAIBoard(object):
             )
 
         inputFrames = np.concatenate((spikeFrame, self.syncFrames))
-        outputFrames = self.inference(self.initFrames, inputFrames)
+        outputFrames = self.inference(self.initFrames, inputFrames, init)
         outputFrames = frame_remove(outputFrames, FH.WORK_TYPE1)
         if outputFrames.shape[0] > self.max_output_frame_num:
             self.max_output_frame_num = outputFrames.shape[0]
@@ -235,6 +245,21 @@ class PAIBoard(object):
                 TimeMeasure,
             )
         return outputSpike
+
+    def __call__(self, input_spike):
+        if self.split_timestep == self.timestep:
+            return self.split_inference(input_spike)
+        else:
+            for i in range(0, self.timestep, self.split_timestep):
+                if i == 0:
+                    output_spike = self.split_inference(
+                        input_spike[i : i + self.split_timestep]
+                    )
+                else:
+                    output_spike = output_spike + self.split_inference(
+                        input_spike[i : i + self.split_timestep], init=False
+                    )
+            return output_spike
 
     def record_time(self, full_time):
         # TODO : read register to get core_time

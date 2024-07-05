@@ -30,7 +30,10 @@ class PAIBoard_SIM(PAIBoard):
     def paicore_status(self):
         print("PAIBoard_SIM Not implemented Status")
 
-    def inference(self, initFrames, inputFrames):
-        workFrames = np.concatenate((initFrames, inputFrames))
+    def inference(self, initFrames, inputFrames, init):
+        if init:
+            workFrames = np.concatenate((initFrames, inputFrames))
+        else:
+            workFrames = inputFrames
         outputFrames = runSimulator(self.simulator, workFrames)
         return outputFrames
