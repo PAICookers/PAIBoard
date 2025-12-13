@@ -1,69 +1,101 @@
-import numpy as np
-import os
+from typing import Literal
+from pathlib import Path
 
-from paiboard.base import PAIBoard
-from paiboard.pcie.dma_pcie import DMA_PCIe
-from paiboard.pcie.global_hw_params import getBoard_data
-from paiboard.utils.timeMeasure import time_calc_addText, get_original_function
+from .xdma_ctrl import XDMACtrl
+from ..base import PAIBoard
+from ..board_cfg import get_board_cfg, ChipSOMType
+from ..common import ChipUartCfg
+from ..types import InputMappingAnyType, OutputMappingType, PayloadDataType
 
-from paiboard.utils.utils_for_uart import *
 
-
-class PAIBoard_PCIe(PAIBoard):
+class PAIBoardPCIe(PAIBoard):
+    chip_som_type = ChipSOMType.SINGLE_BONDING
+    intf: XDMACtrl
 
     def __init__(
         self,
-        baseDir: str,
+        toolchain_build_dir: Path | str,
         timestep: int,
-        layer_num: int = 0,
-        output_delay: int = 0,
-        batch_size: int = 1,
-        backend: str = "PAIBox",
-    ):
+        n_layer: int,
+        batch_mode: bool = False,
+        *,
+        board_name: Literal[
+            "FLIP8", "BONDING003", "BONDING004", "BONDING008", "BONDING8"
+        ] = "FLIP8",
+        xdma_dev_idx: int = 0,
+        xdma_channel: int = 0,
+        n_max_channel: int = 4,
+        neu_vol_reading_mode: Literal["contiguous", "onebyone"] = "contiguous",
+        timeout: int = 2,
+        debug_mode: bool = False,
+    ) -> None:
+        self.intf = XDMACtrl(
+            get_board_cfg(board_name, n_max_channel),
+            xdma_dev_idx,
+            xdma_channel,
+            timeout=timeout,
+        )
         super().__init__(
-            baseDir, timestep, layer_num, output_delay, batch_size, backend
-        )
-        self.globalSignalDelay, self.oen, self.channel_mask = getBoard_data()
-        self.dma_inst = DMA_PCIe(self.oen, self.channel_mask)
-
-    def config(self, oFrmNum: int = 10000, clk_freq: int = 312):
-        print("")
-        if serialConfig(clk_freq, self.globalSignalDelay, self.source_chip):
-            print("[Error] : Uart can not send, Open and Reset PAICORE.")
-            exit()
-
-        self.oFrmNum = oFrmNum
-        self.dma_inst.write_reg(
-            self.dma_inst.REGFILE_BASE + self.dma_inst.OFAME_NUM_REG, oFrmNum
+            toolchain_build_dir,
+            timestep,
+            n_layer,
+            batch_mode=batch_mode,
+            neu_vol_reading_mode=neu_vol_reading_mode,
+            debug_mode=debug_mode,
         )
 
-        print("----------------------------------")
-        print("----------PAICORE CONFIG----------")
-        # SendFrameWrap(configFrames)
-        self.dma_inst.send_config_frame(self.configFrames)
-        print("----------------------------------")
+    def chip_uart_config(
+        self,
+        port: str | None = None,
+        baudrate: int = 9600,
+        clk_freq: int = 312,
+        *,
+        debug: bool = False,
+        clk_en_L2: list[int] | None = None,
+    ) -> bytes:
+        """Configure the chip via UART.
 
-    @time_calc_addText("Init          ")
-    def paicore_init(self, initFrames):
-        self.dma_inst.write_reg(self.dma_inst.REGFILE_BASE + self.dma_inst.CTRL_REG, 4)
-        self.dma_inst.send_frame(initFrames)
-        self.dma_inst.write_reg(self.dma_inst.REGFILE_BASE + self.dma_inst.CTRL_REG, 0)
+        Args:
+            port: The serial port of UART. If None, auto search the port.
+            baudrate: The baudrate of UART.
+            clk_freq: The clock frequency of the chip in MHz.
+            debug: Whether to enable the debug mode of UART.
+            clk_en_L2: The clock enable list for L2 layers. If None, all offline cores are enabled &    \
+                all online cores are disabled.
+        """
+        return ChipUartCfg.serial_config(
+            port,
+            baudrate,
+            self.source_chip,
+            clk_freq,
+            clk_en_L2=clk_en_L2,
+            debug=debug,
+            global_signal_delay=self.intf.board_cfg.global_signal_delay,
+        )
 
-    def paicore_status(self):
-        cpu2fifo_cnt = self.dma_inst.read_reg(self.dma_inst.CPU2FIFO_CNT)
-        fifo2snn_cnt = self.dma_inst.read_reg(self.dma_inst.FIFO2SNN_CNT)
-        snn2fifo_cnt = self.dma_inst.read_reg(self.dma_inst.SNN2FIFO_CNT)
-        fifo2cpu_cnt = self.dma_inst.read_reg(self.dma_inst.FIFO2CPU_CNT)
-        us_time_tick = self.dma_inst.read_reg(self.dma_inst.US_TIME_TICK)
+    def inference(
+        self,
+        inputs: InputMappingAnyType,
+        recv_max_size: int | None = None,
+        filter_output_strict: bool = True,
+        decoding_output_strict: bool = True,
+        *,
+        multi_channel_enable: bool = False,
+    ) -> PayloadDataType | OutputMappingType:
+        return super().inference(
+            inputs,
+            recv_max_size,
+            filter_output_strict,
+            decoding_output_strict,
+            multi_channel_enable=multi_channel_enable,
+        )
 
-        print("cpu2fifo_cnt = " + str(cpu2fifo_cnt))
-        print("fifo2snn_cnt = " + str(fifo2snn_cnt))
-        print("snn2fifo_cnt = " + str(snn2fifo_cnt))
-        print("fifo2cpu_cnt = " + str(fifo2cpu_cnt))
-        print("us_time_tick = " + str(us_time_tick))
-
-    def inference(self, initFrames, inputFrames):
-        self.paicore_init(initFrames)
-        self.dma_inst.send_frame(inputFrames, multi_channel_enable=False)
-        # self.dma_inst.send_frame(inputFrames, multi_channel_enable=False)
-        return self.dma_inst.recv_frame(self.oFrmNum)
+    def prepare(
+        self,
+        clk_freq: int = 312,
+        n_max_oframe: int | None = None,
+        uart_debug_en: bool = False,
+    ) -> None:
+        self.chip_uart_config(clk_freq=clk_freq, debug=uart_debug_en)
+        self.set_n_max_oframe(n_max_oframe)
+        self.chip_hw_model_download()
