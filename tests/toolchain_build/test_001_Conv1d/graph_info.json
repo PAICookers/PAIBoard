@@ -1,0 +1,19 @@
+{
+  "name": "graph_of_Net001_0",
+  "inherent_timestep": 1,
+  "output_flow_format": {
+    "IF_0": {
+      "t_1st_vld": 1,
+      "interval": 1,
+      "n_vld": 0,
+      "is_local_time": false
+    }
+  },
+  "n_core_required": 6,
+  "n_core_occupied": 8,
+  "misc": {
+    "target_chip_list": [
+      0
+    ]
+  }
+}

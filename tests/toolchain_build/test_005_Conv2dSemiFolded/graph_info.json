@@ -1,0 +1,22 @@
+{
+  "name": "graph_of_Net005_0",
+  "inherent_timestep": 8,
+  "output_flow_format": {
+    "nd_Conv2dSemiFolded_0": {
+      "t_1st_vld": 8,
+      "interval": 2,
+      "n_vld": 29,
+      "is_local_time": false
+    }
+  },
+  "n_core_required": 36,
+  "n_core_occupied": 40,
+  "misc": {
+    "target_chip_list": [
+      {
+        "x": 0,
+        "y": 0
+      }
+    ]
+  }
+}
