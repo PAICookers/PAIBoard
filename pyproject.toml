@@ -1,0 +1,83 @@
+[project]
+name = "paiboard"
+version = "1.0.0"
+description = "Application deployment platform for PAICORE"
+authors = [{ name = "Ziru Pan", email = "zrpan@stu.pku.edu.cn" }]
+license = { text = "GPL-3.0-or-later" }
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.3.0",
+    "numpy>=2.1.0,<3.0.0; platform_machine != 'armv7l'",
+    "numpy==1.26.4; platform_machine == 'armv7l'",
+    "pyserial>=3.5; platform_machine != 'armv7l'",
+    "paicorelib>=1.5.1,<1.6.0",
+]
+maintainers = [{ name = "Ziru Pan", email = "zrpan@stu.pku.edu.cn" }]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Embedded Systems",
+]
+keywords = [
+    "PAICORE",
+    "neuromorphic-chip",
+    "ZYNQ",
+    "Xilinx",
+    "hardware-platform",
+]
+
+[project.urls]
+repository = "https://github.com/PAICookers/PAIBoard"
+homepage = "https://github.com/PAICookers/PAIBoard"
+documentation = "https://github.com/PAICookers/PAIBoard#readme"
+
+[tool.poetry]
+packages = [{ include = "paiboard" }]
+
+[dependency-groups]
+dev = ["pytest>=8.0", "pytest-cov>=7.0", "pytest-md>=0.2"]
+
+[tool.poetry.group.test.dependencies]
+pytest = ">=8.0"
+pytest-cov = ">=7.0"
+pytest-md = ">=0.2"
+
+[project.scripts]
+run-zynq-server = "scripts.run_zynq_server:main"
+run-zynq-client = "scripts.run_zynq_client:main"
+
+[tool.uv]
+package = true
+python-preference = "system"
+
+[tool.uv.build-backend]
+module-name = "paiboard"
+module-root = ""
+
+[[tool.uv.index]]
+name = "tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
+
+[[tool.poetry.source]]
+name = "tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+priority = "primary"
+
+[build-system]
+requires = ["uv_build>=0.9.0,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+minversion = "8.0.0"
+testpaths = ["tests"]
+addopts = "--cov=paiboard --cov-report=term"
