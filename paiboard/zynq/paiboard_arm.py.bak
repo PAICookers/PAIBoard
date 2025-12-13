@@ -1,0 +1,128 @@
+import numpy as np
+from paiboard.base import PAIBoard
+from .uart_ctrl.utils import gen_uart_cmd
+
+from .paicontrol import PAICONTROL
+
+from paiboard.utils.timeMeasure import time_calc_addText
+
+
+class PAIBoard_Arm(PAIBoard):
+    def __init__(
+        self,
+        baseDir: str,
+        timestep: int,
+        layer_num: int = 0,
+        read_neu_vol: bool = False,
+        multi_ipi: bool = False,
+        output_delay: int = 0,
+        batch_size: int = 1,
+        exclude_chip=None,
+        input_proj_info_fname=None,
+        output_dest_info_fname=None,
+        backend: str = "PAIBox",
+    ):
+        super().__init__(
+            baseDir,
+            timestep,
+            layer_num,
+            read_neu_vol,
+            multi_ipi,
+            output_delay,
+            batch_size,
+            exclude_chip,
+            input_proj_info_fname,
+            output_dest_info_fname,
+            backend,
+        )
+
+        self.overlay = PAICONTROL()
+
+        self.overlay.write_reg(self.overlay.REGFILE_BASE + self.overlay.CPU2FIFO_CNT, 0)
+
+        self.overlay.write_reg(self.overlay.REGFILE_BASE + self.overlay.FIFO2SNN_CNT, 0)
+
+        self.overlay.write_reg(self.overlay.REGFILE_BASE + self.overlay.SNN2FIFO_CNT, 0)
+
+        self.overlay.write_reg(self.overlay.REGFILE_BASE + self.overlay.FIFO2CPU_CNT, 0)
+
+        self.overlay.write_reg(self.overlay.REGFILE_BASE + self.overlay.DP_RSTN, 0)
+
+        self.overlay.write_reg(self.overlay.REGFILE_BASE + self.overlay.DP_RSTN, 1)
+
+    def chip_init(self, chip_id_list, debug_en: bool = False):
+        self.overlay.reset_chip()
+        for index, source_chip in enumerate(chip_id_list):
+            uart_hex = gen_uart_cmd(
+                clk_freq=240, source_chip=source_chip, Debug_en=debug_en
+            )
+            uart_np = uart_np_gen(uart_hex, index)
+            self.overlay.config_uart_chip(uart_np)
+
+    def _uart_debug(self, source_chip=(1, 0), clk_en="FFFFFFFFFFFFFFFE"):
+        uart_hex = gen_uart_cmd(
+            clk_freq=240, source_chip=source_chip, Debug_en=True, clk_en=clk_en
+        )
+        uart_np = uart_np_gen(uart_hex, 0)
+        self.overlay.config_uart_chip(uart_np, debug_en=True)
+
+    def config(self, oFrmNum: int = 10000, send=True):
+        self.oFrmNum = oFrmNum
+        self.overlay.write_reg(
+            self.overlay.REGFILE_BASE + self.overlay.OFAME_NUM_REG, oFrmNum
+        )
+
+        print("----------------------------------")
+        print("----------PAICORE CONFIG----------")
+        if send:
+            self.overlay.safe_send(
+                self.configFrames, buffer_num=600_000, use_dma_split=True
+            )
+        print("----------------------------------")
+
+    def paicore_status(self):
+        cpu2fifo_cnt = self.overlay.read_reg(self.overlay.CPU2FIFO_CNT)
+        fifo2snn_cnt = self.overlay.read_reg(self.overlay.FIFO2SNN_CNT)
+        snn2fifo_cnt = self.overlay.read_reg(self.overlay.SNN2FIFO_CNT)
+        fifo2cpu_cnt = self.overlay.read_reg(self.overlay.FIFO2CPU_CNT)
+        us_time_tick = self.overlay.read_reg(self.overlay.US_TIME_TICK)
+
+        print("cpu2fifo_cnt = " + str(cpu2fifo_cnt))
+        print("fifo2snn_cnt = " + str(fifo2snn_cnt))
+        print("snn2fifo_cnt = " + str(snn2fifo_cnt))
+        print("fifo2cpu_cnt = " + str(fifo2cpu_cnt))
+        print("us_time_tick = " + str(us_time_tick))
+
+    @time_calc_addText("Init          ")
+    def paicore_init(self, initFrames):
+        self.overlay.write_reg(self.overlay.REGFILE_BASE + self.overlay.CTRL_REG, 4)
+        self.overlay.send(initFrames)
+        self.overlay.write_reg(self.overlay.REGFILE_BASE + self.overlay.CTRL_REG, 0)
+
+    def inference(self, initFrames, inputFrames, init):
+        if init:
+            self.paicore_init(initFrames)
+        self.overlay.send(inputFrames)
+        outputFrames = self.overlay.recv(self.oFrmNum)
+        outputFrames = outputFrames[
+            (outputFrames != 0) & (outputFrames != 0xFFFFFFFFFFFFFFFF)
+        ]
+        return outputFrames
+
+    def read_neu_vol_test(self, initFrames, inputFrames, read_vol_frames, init):
+        if init:
+            self.paicore_init(initFrames)
+        self.overlay.send(inputFrames)
+        _ = self.overlay.recv(self.oFrmNum)
+        neu_vol = np.zeros(len(read_vol_frames), dtype=np.int32)
+        otframe3 = []
+        # read_vol_frams is a list of tuple
+        for item, n_package in read_vol_frames:
+            rd_vol_frms = item[0]  # np arr[0]
+            self.overlay.send(rd_vol_frms)
+            vol_recv = self.overlay.recv(n_package + 2)[
+                : 1 + n_package
+            ]  # start frame + #n of packages
+            otframe3.append(vol_recv)
+        neu_vol = self.decode_neu_vol_frames(otframe3, reading_mode=self.reading_mode)
+        return neu_vol

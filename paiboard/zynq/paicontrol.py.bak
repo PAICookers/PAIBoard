@@ -1,0 +1,280 @@
+import time as tt
+import numpy as np
+from pynq import Overlay, MMIO, Xlnk
+from pynq.lib import AxiGPIO
+from paiboard.uart import UartAXI
+
+
+class PAICONTROL:
+    # 硬件地址常量定义
+    LAST_FRAME = 0xFFFFFFFFFFFFFFFF  # 64位全1，用作无数据标志
+    USER_REG = 0x40010000  # 用户寄存器基地址
+    ADDR_RANGE = 0x400  # 寄存器地址范围
+    RX_STATE = 0 * 4  # 接收状态寄存器偏移
+    TX_STATE = 1 * 4  # 发送状态寄存器偏移
+    CPU2FIFO_CNT = 2 * 4  # CPU到FIFO计数寄存器偏移
+    FIFO2SNN_CNT = 3 * 4  # FIFO到SNN计数寄存器偏移
+    SNN2FIFO_CNT = 4 * 4  # SNN到FIFO计数寄存器偏移
+    FIFO2CPU_CNT = 5 * 4  # FIFO到CPU计数寄存器偏移
+    WDATA_1 = 6 * 4  # 写数据低32位寄存器偏移
+    WDATA_2 = 7 * 4  # 写数据高32位寄存器偏移
+    RDATA_1 = 8 * 4  # 读数据低32位寄存器偏移
+    RDATA_2 = 9 * 4  # 读数据高32位寄存器偏移
+    DATA_CNT = 10 * 4  # 数据计数寄存器偏移
+    TLAST_CNT = 11 * 4  # 最后一帧计数寄存器偏移
+    US_TIME_TICK = 12 * 4  # 微秒计时寄存器偏移
+    SEND_LEN = 20 * 4  # 发送长度寄存器偏移
+    CTRL_REG = 21 * 4  # 控制寄存器偏移
+    OFAME_NUM_REG = 22 * 4  # 输出帧数量寄存器偏移
+    DP_RSTN = 23 * 4  # 数据路径复位寄存器偏移
+    SINGLE_CHANNEL = 24 * 4  # 单通道模式寄存器偏移
+    CHANNEL_MASK = 25 * 4  # 通道掩码寄存器偏移
+    OEN = 26 * 4  # 输出使能寄存器偏移
+    REGFILE_BASE = 0x00000
+
+    def __init__(self):
+        # 加载Overlay比特流并初始化DMA和内存映射
+        self.overlay = Overlay(
+            "/home/xilinx/jupyter_notebooks/PAICORE/hw_files/PAICORE_Stream.bit"
+        )
+        self.xlnk = Xlnk()
+        self.xlnk.xlnk_reset()
+        # 初始化复位GPIO
+        rst_ip = self.overlay.ip_dict["pl_datapath/axi_gpio_0"]
+        self.rst = AxiGPIO(rst_ip).channel1
+        self.mask = 0xFFFFFFFF
+        # 获取DMA发送/接收通道
+        self.dma_send = self.overlay.pl_datapath.axi_dma_0.sendchannel
+        self.dma_recv = self.overlay.pl_datapath.axi_dma_0.recvchannel
+        # 设置内存映射寄存器访问
+        self.mmio = MMIO(self.USER_REG, self.ADDR_RANGE)
+        # 初始化UART控制器列表（4个UART接口）
+        uart_addresses = [0x42C00000, 0x42C10000, 0x42C20000, 0x42C30000]
+        self.uart_list = [UartAXI(addr) for addr in uart_addresses]
+        for uart in self.uart_list:
+            uart.setupCtrlReg()
+        # 初始化寄存器默认值
+        self.oFrmNum = 20  # 默认输出帧数量
+        self.mmio.write(self.CPU2FIFO_CNT, 0)
+        self.mmio.write(self.FIFO2SNN_CNT, 0)
+        self.mmio.write(self.SNN2FIFO_CNT, 0)
+        self.mmio.write(self.FIFO2CPU_CNT, 0)
+        self.mmio.write(self.OFAME_NUM_REG, self.oFrmNum)
+        self.mmio.write(self.OEN, 0x01)
+        self.mmio.write(self.CHANNEL_MASK, 0x01)
+
+    @staticmethod
+    def npFrameSplit(inputFrame: np.ndarray, buffer_num: int) -> np.ndarray:
+        """
+        按照 buffer_num 拆分帧，并在末尾添加一帧 0xFFFFFFFFFFFFFFFF 标志帧，用于 FPGA 接收识别。
+
+        参数：
+        - inputFrame: np.ndarray (uint64)
+        - buffer_num: 每帧长度
+
+        返回：
+        - np.ndarray，已拆分且补帧完毕的二维数组（N帧 x buffer_num）
+        """
+        new_col = int((inputFrame.size - 1) / buffer_num)
+        new_shape = (new_col, buffer_num)
+        first = inputFrame[0 : buffer_num * new_col].reshape(new_shape)
+        second = inputFrame[buffer_num * new_col :]
+        all_one = np.array([[0xFFFFFFFFFFFFFFFF] * buffer_num], dtype=np.uint64)
+        all_one[0, 0 : second.size] = second
+        split_frame = np.concatenate((first, all_one))
+        return split_frame
+
+    @staticmethod
+    def dmaSplit(inputFrame: np.ndarray, max_len: int) -> list:
+        """
+        将数据按照 max_len 拆成若干块，不添加结尾标志，适合高性能 DMA。
+
+        参数：
+        - inputFrame: np.ndarray (uint64)
+        - max_len: 每块最大长度
+
+        返回：
+        - List[np.ndarray]，多个数据块
+        """
+        chunks = []
+        total_len = inputFrame.size
+        for i in range(0, total_len, max_len):
+            chunk = inputFrame[i : i + max_len]
+            #           print(f"[DEBUG] 正在生成第 {int(i/max_len+1)} 包，大小：{chunk.size * 8 / 1024:.2f} KB")
+            chunks.append(chunk)
+        #         print(f"chunks.shape : {len(chunks)}")
+        return chunks
+
+    def safe_send(self, data: np.ndarray, buffer_num: int, use_dma_split: bool = False):
+        if data.size > buffer_num:
+            chunks = (
+                self.dmaSplit(data, buffer_num)
+                if use_dma_split
+                else self.npFrameSplit(data, buffer_num)
+            )
+            for i, chunk in enumerate(chunks):
+                self.send(chunk)
+        else:
+            self.send(data)
+            self.wait_for_idle(timeout=3.0)
+
+    def wait_for_idle(self, timeout=2.0):
+        """
+        等待 FPGA 清空 TX_STATE / RX_STATE，表示已完成处理。
+        默认最多等待 timeout 秒，否则抛出 TimeoutError。
+        """
+        import time
+
+        start = time.time()
+        while True:
+            tx_state = self.mmio.read(self.TX_STATE)
+            rx_state = self.mmio.read(self.RX_STATE)
+            if tx_state == 0 and rx_state == 0:
+                break
+            if time.time() - start > timeout:
+                raise TimeoutError(
+                    "FPGA 状态未清空（TX/RX 未归零），可能处理过慢或异常"
+                )
+
+    def send(self, frames_bin: np.ndarray):
+        """发送数据帧（numpy uint64数组）。"""
+        frames_num = frames_bin.size
+        assert frames_bin.dtype == np.uint64, "send() data must be np.uint64"
+        # 分配连续物理内存缓冲区并复制数据
+        buffer = self.xlnk.cma_array(shape=(frames_num,), dtype=np.uint64)
+        np.copyto(buffer, frames_bin)
+        # 设置发送长度寄存器并启动DMA发送
+        self.mmio.write(self.SEND_LEN, frames_num)
+        self.dma_send.transfer(buffer)
+        # 等待发送完成（TX_STATE置位表示DMA发送结束）
+        start_time = tt.time()
+        while True:
+            tx_state = self.mmio.read(self.TX_STATE)
+            if tx_state != 0:
+                break
+        # 清除发送状态寄存器
+        self.mmio.write(self.TX_STATE, 0)
+        # 释放分配的缓冲区内存
+        buffer.close()
+        # send 操作无返回值
+
+    def recv(self, frame_count: int = None) -> np.ndarray:
+        """接收数据帧，返回 numpy uint64 数组。可选参数指定期望接收的帧数量。"""
+        # 如果指定了接收帧数量，则更新寄存器配置
+        if frame_count is not None:
+            self.oFrmNum = int(frame_count)
+            self.mmio.write(self.OFAME_NUM_REG, self.oFrmNum)
+        # 分配连续物理内存缓冲区用于接收数据
+        buffer = self.xlnk.cma_array(shape=(self.oFrmNum,), dtype=np.uint64)
+        # 启动DMA接收，并通知硬件开始写入数据
+        self.dma_recv.transfer(buffer)
+        self.mmio.write(self.RX_STATE, 1)
+        # 等待接收完成（RX_STATE从1变为其他值表示DMA接收结束）
+        while True:
+            rx_state = self.mmio.read(self.RX_STATE)
+            if rx_state != 1:
+                break
+        # 清除接收状态寄存器并等待DMA传输完成
+        self.mmio.write(self.RX_STATE, 0)
+        self.dma_recv.wait()
+        # 拷贝接收到的数据到常规 numpy 数组并释放缓冲区
+        recv_frame = np.array(buffer[0 : self.oFrmNum], dtype=np.uint64)
+        buffer.close()
+        # 如果未收到任何数据帧，则返回标志值
+        if recv_frame.size == 0:
+            print("No outputframe for this work.")
+            recv_frame = np.array([self.LAST_FRAME], dtype=np.uint64)
+        return recv_frame
+
+    def write_reg(self, addr: int, value: int):
+        """写寄存器：将指定地址的寄存器写入给定值。"""
+        # 如果写的是输出帧数量寄存器，更新内部记录
+        if addr == self.OFAME_NUM_REG:
+            self.oFrmNum = int(value)
+        # 执行寄存器写操作
+        self.mmio.write(int(addr), int(value))
+
+    def read_reg(self, addr: int) -> np.ndarray:
+        """读寄存器：返回指定地址寄存器的当前值（uint64数组形式）。"""
+        reg_data = self.mmio.read(int(addr))
+        return np.array([reg_data], dtype=np.uint64)
+
+    def reset_chip(self):
+        """执行一次芯片复位。"""
+        # 拉高复位信号然后拉低，实现脉冲复位
+        self.rst.write(0xF, self.mask)
+        tt.sleep(0.02)
+        self.rst.write(0x0, self.mask)
+        tt.sleep(0.02)
+
+    def config_uart_chip(self, data_array: np.ndarray, debug_en: bool = False):
+        """
+        从传入的 np.uint8 数组中解析 UART 通道编号和数据内容，
+        并向指定 UART 芯片发送数据。自动解析第一个字节为 uart_num。
+
+        参数：
+        - data_array: np.ndarray，前1位是 uart_num，后续15位为要发送的数据。
+
+        返回：
+        - UART响应数据（通常为写入回显）
+        """
+        if data_array.dtype != np.uint8:
+            raise ValueError("data_array must be of dtype np.uint8")
+
+        if data_array.size < 2:
+            raise ValueError("data_array 太短，至少需要 uart_num + 1 字节数据")
+
+        # 第一个字节是 UART 芯片编号
+        uart_num = int(data_array[0])
+        print(f"[UART] send to UART channel {uart_num}")
+
+        if not (0 <= uart_num < len(self.uart_list)):
+            raise ValueError(f"uart_num 超出范围：{uart_num}")
+
+        # 后续为 UART 数据内容，取前15个字节
+        uart_payload = [int(x) for x in data_array[1:16]]
+
+        # 补齐长度为15字节
+        if len(uart_payload) < 15:
+            uart_payload += [0] * (15 - len(uart_payload))
+
+        # 写入并读取回显
+        send_num = self.uart_list[uart_num].write_hex(uart_payload)
+        if not debug_en:
+            output = self.uart_list[uart_num].read_hex(send_num)
+        else:
+            output = self.uart_list[uart_num].read_hex(send_num + 19)
+        print(f"[UART] return：{output}")
+        return output
+
+    def status(self) -> np.ndarray:
+        """查询当前状态，返回各状态寄存器值（uint64数组），并打印状态信息。"""
+        rx_state = self.mmio.read(self.RX_STATE)
+        tx_state = self.mmio.read(self.TX_STATE)
+        cpu2fifo_cnt = self.mmio.read(self.CPU2FIFO_CNT)
+        fifo2snn_cnt = self.mmio.read(self.FIFO2SNN_CNT)
+        snn2fifo_cnt = self.mmio.read(self.SNN2FIFO_CNT)
+        fifo2cpu_cnt = self.mmio.read(self.FIFO2CPU_CNT)
+        us_time_tick = self.mmio.read(self.US_TIME_TICK)
+        # 打印状态信息
+        print("rx_state     = " + str(rx_state))
+        print("tx_state     = " + str(tx_state))
+        print("cpu2fifo_cnt = " + str(cpu2fifo_cnt))
+        print("fifo2snn_cnt = " + str(fifo2snn_cnt))
+        print("snn2fifo_cnt = " + str(snn2fifo_cnt))
+        print("fifo2cpu_cnt = " + str(fifo2cpu_cnt))
+        print("us_time_tick = " + str(us_time_tick))
+        # 将状态打包为uint64数组返回
+        status_frame = np.array(
+            [
+                rx_state,
+                tx_state,
+                cpu2fifo_cnt,
+                fifo2snn_cnt,
+                snn2fifo_cnt,
+                fifo2cpu_cnt,
+                us_time_tick,
+            ],
+            dtype=np.uint64,
+        )
+        return status_frame
