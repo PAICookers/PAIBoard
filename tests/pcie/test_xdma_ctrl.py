@@ -5,6 +5,7 @@ from paiboard.common import RegFile
 from paiboard.global_cfg import CONFIG_FILE_DTYPE
 from paiboard.pcie.xdma_ctrl import XDMACtrl
 from tests.utils import file_not_exist_fail, skip_if_in_ci_env
+
 from .conftest import has_xdma_device
 
 

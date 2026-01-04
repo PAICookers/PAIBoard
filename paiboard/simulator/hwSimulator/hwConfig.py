@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+
 #NeuronId: ---|--------------------|-----|-----------|------------------------|
 #               COREX + COREY(10)   un(0)   unuse(5)           NEURON(12)
 #AxonId  : ---|--------------------|-----|-------------|----------------------|
@@ -52,7 +53,7 @@ class HardwareF:
     @staticmethod
     def getCoreId(fullId):
         return (fullId >> HardwareF.COREBASE) & HardwareF.COREMASK
-    
+
     @staticmethod
     def getGroupId(fullId):
         return (fullId >> HardwareF.GROUPBASE)
@@ -77,7 +78,7 @@ class HardwareF:
     @staticmethod
     def getAxonId(fullId, inputWidth):
         return HardwareF.getComAxonId(fullId) % (HardwareF.AXONNUM // inputWidth)
-    
+
     @staticmethod
     def getComAxonId(fullId):
         return fullId & HardwareF.COMAXONMASK
@@ -85,7 +86,7 @@ class HardwareF:
     @staticmethod
     def getSlotId(fullId, inputWidth):
         return HardwareF.getComAxonId(fullId) // (HardwareF.AXONNUM // inputWidth)
-    
+
     @staticmethod
     def getfullId(groupId, coreId, unitId):
         return (groupId << HardwareF.GROUPBASE) + (coreId << HardwareF.COREBASE) + unitId
@@ -93,7 +94,7 @@ class HardwareF:
     @staticmethod
     def getfullId2(gPlusCoreId, unitId):
         return (gPlusCoreId << HardwareF.COREBASE) + unitId
-    
+
     @staticmethod
     def addBaseCoreId(fullId):
         return fullId
@@ -112,7 +113,7 @@ class HardwareN: # online hardware configuration
     SLOTBIT   = 3
     AXONBIT   = 10
     NEURONBIT = 10
-    
+
     COREXNUM = 4
     COREYNUM = 4
     SLOTNUM = 8
@@ -122,7 +123,7 @@ class HardwareN: # online hardware configuration
 
     COREBASE = (AXONBIT + SLOTBIT + UN)
     GROUPBASE = (COREBASE + COREBIT)
-    
+
     COREMASK = (1 << COREBIT) - 1
     CHIPMASK = (1 << CHIPBIT) - 1
     NEURONMASK = (1 << NEURONBIT) - 1
@@ -145,7 +146,7 @@ class HardwareN: # online hardware configuration
         HardwareN.NoCLevelsX = deepcopy(NoCLevelsX)
         HardwareN.NoCLevelsY = deepcopy(NoCLevelsY)
         HardwareN.NOCLEVEL = len(NoCLevelsX)
-    
+
     @staticmethod
     def setMAXNoCLevel(NoCLevelsX, NoCLevelsY):
         HardwareN.MAXNoCLevelsX = deepcopy(NoCLevelsX)
@@ -155,20 +156,20 @@ class HardwareN: # online hardware configuration
     @staticmethod
     def getGroupId(fullId):
         return fullId >> HardwareN.GROUPBASE
-    
+
     @staticmethod
     def getCoreId(fullId):
         return (fullId >> HardwareN.COREBASE) &  HardwareN.COREMASK
-    
+
     @staticmethod
     def getNeuronId(fullId):
         return (fullId & ((1 << (HardwareN.COREBASE)) - 1))
         # return fullId & HardwareN.NEURONMASK
-    
+
     @staticmethod
     def getAxonId(fullId):
         return fullId & HardwareN.AXONMASK
-    
+
     @staticmethod
     def getComAxonId(fullId):
         return fullId & HardwareN.COMAXONMASK
@@ -188,7 +189,7 @@ class HardwareN: # online hardware configuration
     @staticmethod
     def getAxonId(fullId):
         return HardwareN.getComAxonId(fullId) % HardwareN.AXONNUM
-    
+
     @staticmethod
     def getComAxonId(fullId):
         return fullId & HardwareN.COMAXONMASK
@@ -196,7 +197,7 @@ class HardwareN: # online hardware configuration
     @staticmethod
     def getSlotId(fullId):
         return HardwareN.getComAxonId(fullId) // HardwareN.AXONNUM
-    
+
     @staticmethod
     def getfullId(groupId, coreId, unitId):
         return (groupId << HardwareN.GROUPBASE) + (coreId << HardwareN.COREBASE) + unitId
@@ -205,7 +206,7 @@ class HardwareN: # online hardware configuration
     def getfullId2(gPlusCoreId, unitId):
         return (gPlusCoreId << HardwareN.COREBASE) + unitId
 
-        
+
     @staticmethod
     def addBaseCoreId(fullId):
         assert (fullId & HardwareN.COREBASEMASK) == 0
@@ -234,7 +235,7 @@ class Hardware:
     @staticmethod
     def getCoreId(fullId):
         return HardwareF.getCoreId(fullId)
-    
+
     @staticmethod
     def getgPlusCoreId(fullId):
         return HardwareF.getgPlusCoreId(fullId)
@@ -273,7 +274,7 @@ class Hardware:
             return HardwareF.getAxonId(fullId, inputWidth)
         else:
             return HardwareN.getAxonId(fullId)
-    
+
     @staticmethod
     def getSlotId(fullId, inputWidth, offline):
         if offline:
@@ -328,7 +329,7 @@ class CoreSet:
     def isOffline2(fullId):
         gplusCoreId = fullId >> HardwareF.COREBASE
         return CoreSet.isOffline(gplusCoreId)
-    
+
     @staticmethod
     def isOffline3(groupId, coreId):
         gplusCoreId = (groupId << HardwareN.COREBIT) + coreId
@@ -367,11 +368,11 @@ class DataFrame:
     @staticmethod
     def getPayLoad(fullId):
         return fullId & DataFrame.MASK5
-    
+
     @staticmethod
     def getFrame(oldId, coreAddr, starAddr):
         return (8 << 60) + (coreAddr << 40) + (starAddr << 30) + oldId
-    
+
     @staticmethod
     def getFormat(oldId, coreAddr, starAddr):
         return DataFrame.getFrame(oldId, coreAddr, starAddr) >> 8

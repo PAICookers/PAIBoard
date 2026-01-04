@@ -2,20 +2,18 @@ import atexit
 import signal
 import socket
 import sys
-import numpy as np
 from pathlib import Path
 from typing import Any, NoReturn
 
-from paiboard.global_cfg import DEFAULT_N_OUTPUT_FRAMES
-from paiboard.types import FRAME_DTYPE
+import numpy as np
+from paicorelib.framelib import FRAME_DTYPE
+
 from paiboard.common import RegFile
+from paiboard.global_cfg import DEFAULT_N_OUTPUT_FRAMES
+
 from ..overlay import ZynqPlatformOverlay
-from ..zynq_packet import (
-    EnetCommand as CMD,
-    PayloadType,
-    ZynqPacket,
-    ZYNQ_PACKET_BYTEORDER,
-)
+from ..zynq_packet import ZYNQ_PACKET_BYTEORDER, PayloadType, ZynqPacket
+from ..zynq_packet import EnetCommand as CMD
 
 
 class ZynqServer:
@@ -92,7 +90,7 @@ class ZynqServer:
 
                         if recv_cmd == CMD.QUIT:
                             break
-                    except Exception as e:
+                    except Exception:
                         # print(e)
                         pass
                         # break

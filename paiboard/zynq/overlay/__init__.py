@@ -1,5 +1,5 @@
 try:
-    import pynq
+    import pynq  # pyright: ignore
 
     ON_ZYNQ = True
 except ImportError:
@@ -7,3 +7,5 @@ except ImportError:
 
 if ON_ZYNQ:
     from .base import ZynqPlatformOverlay
+
+__all__ = ["ON_ZYNQ", "ZynqPlatformOverlay"]

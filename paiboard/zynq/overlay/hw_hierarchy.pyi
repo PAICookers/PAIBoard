@@ -1,13 +1,7 @@
 from typing import ClassVar
-from pynq import DefaultHierarchy
 
-from paiboard.types import FrameArrayType
-
-class DefaultHierarchy:
-    def __init__(self, description) -> None: ...
-    @staticmethod
-    def checkhierarchy(description) -> bool: ...
-    def download(self, bitfile_name: str, dtbo=None, program=True) -> None: ...
+from paicorelib.framelib import FrameArrayType
+from pynq import DefaultHierarchy  # pyright: ignore
 
 class HwDatapathHier(DefaultHierarchy):
     UART_IP_NAMES: ClassVar[list[str]]

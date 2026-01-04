@@ -1,13 +1,15 @@
-import numpy as np
 from pathlib import Path
-from pynq import Overlay
 
-from ..utils import auto_search_bitfile
-from .hw_hierarchy import HwDatapathHier
+import numpy as np
+from paicorelib.framelib import FrameArrayType
+from pynq import Overlay  # pyright: ignore
+
 from paiboard.common import RegFile
 from paiboard.exceptions import PAIBoardDeviceError
 from paiboard.global_cfg import FRAME_VALUE_FILTER_LIST
-from paiboard.types import FrameArrayType
+
+from ..utils import auto_search_bitfile
+from .hw_hierarchy import HwDatapathHier
 
 
 class ZynqPlatformOverlay(Overlay):

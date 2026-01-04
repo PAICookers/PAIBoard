@@ -1,11 +1,11 @@
-from typing import Literal
 from pathlib import Path
+from typing import Literal
 
-from .xdma_ctrl import XDMACtrl
 from ..base import PAIBoard
-from ..board_cfg import get_board_cfg, ChipSOMType
+from ..board_cfg import ChipSOMType, get_board_cfg
 from ..common import ChipUartCfg
 from ..types import InputMappingAnyType, OutputMappingType, PayloadDataType
+from .xdma_ctrl import XDMACtrl
 
 
 class PAIBoardPCIe(PAIBoard):

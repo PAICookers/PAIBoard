@@ -26,6 +26,7 @@ FIXME Need test
 from dataclasses import dataclass
 from enum import Enum, unique
 from typing import Literal
+
 from .exceptions import BoardCfgError
 
 SUPPORTED_BOARDS = ["FLIP8", "BONDING003", "BONDING004", "BONDING008", "BONDING8"]

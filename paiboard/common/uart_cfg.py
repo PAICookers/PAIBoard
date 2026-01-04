@@ -1,8 +1,9 @@
-import numpy as np
 import time
 from typing import overload
+
+import numpy as np
 from numpy.typing import NDArray
-from paicorelib.coordinate import to_coord, CoordLike
+from paicorelib.coordinate import CoordLike, to_coord
 
 try:
     import serial

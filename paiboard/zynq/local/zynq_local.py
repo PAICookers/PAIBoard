@@ -1,9 +1,10 @@
 import atexit
 from pathlib import Path
 
+from paicorelib.framelib import FrameArrayType
+
 from ..overlay import ZynqPlatformOverlay
 from ..zynq_abc import ZynqCtrlInterface
-from paiboard.types import FrameArrayType
 
 
 class ZynqLocal(ZynqCtrlInterface):

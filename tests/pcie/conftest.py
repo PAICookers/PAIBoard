@@ -1,5 +1,7 @@
-import pytest
 from pathlib import Path
+
+import pytest
+
 from paiboard.board_cfg import get_board_cfg
 from paiboard.exceptions import PAIBoardDMADeviceError
 from paiboard.pcie.xdma_ctrl import XDMACtrl

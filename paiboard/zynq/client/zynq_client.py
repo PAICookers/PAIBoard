@@ -1,15 +1,18 @@
-from typing import Literal
 import atexit
-import numpy as np
 import socket
+from typing import Literal
 
-from paiboard.types import FRAME_DTYPE, FrameArrayType
+import numpy as np
+from paicorelib.framelib import FRAME_DTYPE, FrameArrayType
+
 from ..zynq_abc import ZynqCtrlInterface
 from ..zynq_packet import (
-    EnetCommand as CMD,
+    ZYNQ_PACKET_BYTEORDER,
     PayloadType,
     ZynqPacket,
-    ZYNQ_PACKET_BYTEORDER,
+)
+from ..zynq_packet import (
+    EnetCommand as CMD,
 )
 
 

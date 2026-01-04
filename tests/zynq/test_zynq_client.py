@@ -1,7 +1,7 @@
 import numpy as np
+from paicorelib.framelib import FRAME_DTYPE
 
 from paiboard.common.uart_cfg import ChipUartCfg
-from paiboard.types import FRAME_DTYPE
 from paiboard.zynq import ZynqClient
 from paiboard.zynq.zynq_packet import EnetCommand as CMD
 
@@ -81,5 +81,4 @@ class TestZynqClientMock:
 
 
 class TestZynqClient:
-
     pass

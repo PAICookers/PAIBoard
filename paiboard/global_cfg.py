@@ -1,6 +1,5 @@
 import numpy as np
-from .types import FRAME_DTYPE
-
+from paicorelib.framelib import FRAME_DTYPE
 
 # 64'hffff_ffff_ffff_ffff
 FRAME_PAD_DUMMY_VALUE = np.iinfo(FRAME_DTYPE).max

@@ -1,10 +1,13 @@
-import pytest
 import socket
 import threading
 from pathlib import Path
+
+import pytest
+
 from paiboard.zynq import ON_ZYNQ, ZynqClient
 from paiboard.zynq.utils import auto_search_bitfile
-from paiboard.zynq.zynq_packet import EnetCommand as CMD, ZynqPacket
+from paiboard.zynq.zynq_packet import EnetCommand as CMD
+from paiboard.zynq.zynq_packet import ZynqPacket
 
 # Default path of FPGA bitstream & ovarlay hwh file for testing
 FPGA_BITFILE_PATH = Path(__file__).parent / "fpga"

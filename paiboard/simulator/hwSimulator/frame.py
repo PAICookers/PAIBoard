@@ -12,7 +12,7 @@ class MASK:
 
     STARBEGIN = 30
     STARMASK = ((1 << 10) - 1)
-    
+
     AXONBEGIN = 16
     AXONMASK = ((1 << 11) - 1)
 
@@ -38,7 +38,7 @@ class FrameKind:
     INIT = [
         (11 << 60), (15 << 60)
     ]
-    
+
     START = [
         (8 << 60) + (4 << 27), (15 << 60) + (7 << 27)
     ]
@@ -65,27 +65,27 @@ class FrameKind:
     ]
 
 class Frame:
-            
+
     @staticmethod
     def toString(intFrame):
         return "{:064b}".format(intFrame)
-    
+
     @staticmethod
     def toInt(strFrame):
         return int(strFrame,2)
-    
+
     @staticmethod
     def getChipId(intFrame):
         return (intFrame >> MASK.CHIPBEGIN) & MASK.CHIPMASK
-    
+
     @staticmethod
     def getCoreId(intFrame):
         return (intFrame >> MASK.COREBEGIN) & MASK.COREMASK
-    
+
     @staticmethod
     def getGlobalId(intFrame):
         return (intFrame >> MASK.COREBEGIN) & MASK.GLOBALMASK
-    
+
     @staticmethod
     def getStarId(intFrame):
         return (intFrame >> MASK.STARBEGIN) & MASK.STARMASK
@@ -97,7 +97,7 @@ class Frame:
     @staticmethod
     def getSlotId(intFrame):
         return (intFrame >> MASK.SLOTBEGIN) & MASK.SLOTMASK
-    
+
     @staticmethod
     def getData(intFrame):
         return (intFrame >> MASK.DATABEGIN) & MASK.DATAMASK
@@ -109,11 +109,11 @@ class Frame:
     @staticmethod
     def getFrameNum(intFrame):
         return intFrame & MASK.FRAMENUM_MASK
-    
+
     @staticmethod
     def isKind(intFrame, frameKind):
         return (intFrame & frameKind[1]) == frameKind[0]
-    
+
     @staticmethod
     def makeSyncFrame(chipId, t):
         return FrameKind.SYNC[0] | (chipId << MASK.CHIPBEGIN) | t
@@ -133,7 +133,7 @@ class Frame:
     @staticmethod
     def makeStartFrame(globalCoreId, starId):
         return Frame.makeWorkFrame(FrameKind.START[0], globalCoreId, starId)
-    
+
     @staticmethod
     def makeEndFrame(globalCoreId, starId):
         return Frame.makeWorkFrame(FrameKind.END[0], globalCoreId, starId)
@@ -141,12 +141,12 @@ class Frame:
     @staticmethod
     def makeLateralFrame(globalCoreId, starId):
         return Frame.makeWorkFrame(FrameKind.LATERAL[0], globalCoreId, starId)
-    
+
     @staticmethod
     def makeDataFrame(globalCoreId, starId, axonId, slotId, data):
         return FrameKind.DATA[0] | (globalCoreId << MASK.COREBEGIN) \
             | (axonId << MASK.AXONBEGIN) | (starId << MASK.STARBEGIN) | (slotId << MASK.SLOTBEGIN) | data
-    
+
     @staticmethod
     def makeTest3InFrame(globalCoreId, starId, sram, frameNum):
         return FrameKind.TEST3_IN[0] | (globalCoreId << MASK.COREBEGIN) | (starId << MASK.STARBEGIN) \
@@ -156,7 +156,7 @@ class Frame:
     def makeTest4InFrame(globalCoreId, starId, sram, frameNum):
         return FrameKind.TEST4_IN[0] | (globalCoreId << MASK.COREBEGIN) | (starId << MASK.STARBEGIN) \
             | (sram << MASK.SRAMBEGIN) | frameNum
-    
+
     @staticmethod
     def makePosFrame(globalCoreId, starId, axonId, slotId):
         return (globalCoreId << MASK.COREBEGIN) | (starId << MASK.STARBEGIN) \

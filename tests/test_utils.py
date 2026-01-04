@@ -1,6 +1,7 @@
 import time
 
 import pytest
+
 from paiboard.exceptions import PAIBoardTimeoutError
 from paiboard.utils import wait_with_timeout
 

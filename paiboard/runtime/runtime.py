@@ -1,21 +1,24 @@
-from collections.abc import Iterable, Sequence
-from typing import Any, Literal, cast, overload, TYPE_CHECKING
-import warnings
-import numpy as np
 import sys
+import warnings
+from collections.abc import Iterable, Sequence
+from typing import TYPE_CHECKING, Any, Literal, cast, overload
+
+import numpy as np
 from numpy.typing import ArrayLike, NDArray
-from paicorelib import OffCoreCfg, OfflineFrameGen, OnlineFrameGen, ChipFrameGen
+from paicorelib import ChipFrameGen, OffCoreCfg, OfflineFrameGen, OnlineFrameGen
 from paicorelib.coordinate import (
     ChipCoord,
     Coord,
     CoordLike,
     CoreType,
     to_coords,
+)
+from paicorelib.coordinate import (
     ReplicationId as RId,
 )
 from paicorelib.framelib import (
-    OfflineWorkFrame1,
     OfflineTestInFrame3,
+    OfflineWorkFrame1,
     OnlineWorkFrame1_1,
 )
 from paicorelib.framelib import OfflineTestOutFrame3 as Off_ToF3
@@ -25,15 +28,17 @@ from paicorelib.framelib.frame_defs import FramePackageType as FPType
 from paicorelib.framelib.frame_defs import OfflineConfigFrame3Format as Off_NRAMF
 from paicorelib.framelib.frame_defs import (
     OfflineWorkFrame1Format as Off_WF1F,
-    OnlineWorkFrame1Format_1 as On_WF1F_1,
 )
 from paicorelib.framelib.frame_defs import OnlineConfigFrame3Format_WW1 as ON_NRAMF_WW1
 from paicorelib.framelib.frame_defs import OnlineConfigFrame3Format_WWn as ON_NRAMF_WWn
+from paicorelib.framelib.frame_defs import (
+    OnlineWorkFrame1Format_1 as On_WF1F_1,
+)
 from paicorelib.framelib.types import (
-    PayloadDataType,
+    FRAME_DTYPE,
     PAYLOAD_DATA_DTYPE,
     FrameArrayType,
-    FRAME_DTYPE,
+    PayloadDataType,
 )
 from paicorelib.framelib.utils import framearray_header_check
 
@@ -47,13 +52,13 @@ from .types import (
     InputNodeRTCfg,
     InputNodeRTCfgMap,
     NeuPhyLocMap,
+    NeuSegAddrAttrs,
     OutputDestAttrs,
     OutputDestAttrsMap,
-    NeuSegAddrAttrs,
     OutputDestRTCfg,
     OutputDestRTCfgMap,
-    coordstr2coord,
     attrs2coord,
+    coordstr2coord,
     get_n_timeslot_max,
 )
 
@@ -208,7 +213,7 @@ class PAIRuntime:
         raise_if_duplicated: bool = True,
     ) -> PayloadDataType:
         """Decode output frames from the chips. This method has real-time requirement.
-        
+
         Args:
             oframes (FrameArrayType): Output frames from the chips.
             rtcfg_map (OutputDestRTCfg): The runtime configuration of output destinations.
@@ -275,7 +280,7 @@ class PAIRuntime:
 
         Returns:
             A mapping from output node names to decoded data.
-        
+
         NOTE: This method has real-time requirement. To speed up decoding, disable `raise_if_has_other_type`,   \
             `raise_if_not_matched` & `raise_if_duplicated`.
         """
@@ -853,7 +858,7 @@ def decode_partial_voltage(
 
     if n_package != otframe3.size - 1:
         raise ValueError(
-            f"the number of packages is expected to be {n_package}, but got {otframe3.size-1}"
+            f"the number of packages is expected to be {n_package}, but got {otframe3.size - 1}"
         )
 
     if (coord := Coord.from_addr(core_coord)) not in core_locs:

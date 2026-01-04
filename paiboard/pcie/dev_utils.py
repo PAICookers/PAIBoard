@@ -1,9 +1,10 @@
 import mmap
 import os
 import sys
-import numpy as np
-from enum import Enum, unique
 from contextlib import contextmanager
+from enum import Enum, unique
+
+import numpy as np
 
 
 @unique

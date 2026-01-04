@@ -1,7 +1,8 @@
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Literal
-from paicorelib import CoordLike
+
+from paicorelib.coordinate import CoordLike
 
 from ..base import PAIBoard
 from ..board_cfg import ChipSOMType
@@ -60,7 +61,6 @@ if ON_ZYNQ:
     from .local import ZynqLocal
 
     class PAIBoardZynq(PAIBoardZynqBase):
-
         def __init__(
             self,
             toolchain_build_dir: Path | str,
@@ -89,7 +89,6 @@ if ON_ZYNQ:
 
 
 class PAIBoardZynqClient(PAIBoardZynqBase):
-
     def __init__(
         self,
         toolchain_build_dir: Path | str,

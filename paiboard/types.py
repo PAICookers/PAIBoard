@@ -1,10 +1,11 @@
 from collections.abc import Sequence
 from enum import Enum, auto, unique
-from paicorelib import FRAME_DTYPE, FrameArrayType, PAYLOAD_DATA_DTYPE, PayloadDataType
-import numpy as np
-from .runtime.types import NodeName
-from .runtime.runtime import VoltageType
 
+import numpy as np
+from paicorelib import PayloadDataType
+
+from .runtime.runtime import VoltageType
+from .runtime.types import NodeName
 
 InputMappingType = dict[NodeName, np.ndarray]
 InputMappingAnyType = np.ndarray | Sequence[np.ndarray] | InputMappingType

@@ -5,10 +5,12 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, ClassVar, Literal, overload
-import numpy as np
 
-from paicorelib import ChipCoord, CoordLike, to_coord, to_coords, OfflineFrameGen
-from paicorelib.framelib.frame_defs import FrameHeader as FH, FrameFormat as FF
+import numpy as np
+from paicorelib import ChipCoord, CoordLike, OfflineFrameGen, to_coord, to_coords
+from paicorelib.framelib import PAYLOAD_DATA_DTYPE, FrameArrayType
+from paicorelib.framelib.frame_defs import FrameFormat as FF
+from paicorelib.framelib.frame_defs import FrameHeader as FH
 
 from .board_cfg import ChipSOMType
 from .common import HostCtrlInterface, RegFile
@@ -23,36 +25,32 @@ from .global_cfg import (
     DEFAULT_FNAME_CONFIG_FILE_WO_SUFFIX,
     DEFAULT_FNAME_CORE_PARAMS_CONF,
     DEFAULT_FNAME_GRAPH_INFO,
+    DEFAULT_FNAME_INPUT_NODE_INFO,
     DEFAULT_FNAME_NEURON_PHY_LOC,
     DEFAULT_FNAME_OUTPUT_DEST_INFO,
-    DEFAULT_FNAME_INPUT_NODE_INFO,
 )
 from .runtime import PAIRuntime
 from .runtime.types import (
     ChipCoordStr,
     CoordStr,
-    OutputDestAttrsMap,
     InputNodeAttrsMap,
-    coordstr2coord,
-    NodeName,
     NeuPhyLocMap,
+    NodeName,
+    OutputDestAttrsMap,
+    coordstr2coord,
     get_n_timeslot_max,
     is_node_online,
 )
-
 from .types import (
     InferenceMode,
     InputMappingAnyType,
     InputMappingType,
-    FrameArrayType,
     NeuVoltageMappingType,
     OutputMappingType,
-    PAYLOAD_DATA_DTYPE,
     PayloadDataType,
     VoltageType,
 )
 from .utils import check_requirements, time_it
-
 
 __all__ = ["PAIBoard"]
 

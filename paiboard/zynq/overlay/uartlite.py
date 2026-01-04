@@ -1,6 +1,7 @@
 from time import sleep, time
 from typing import Any
-from pynq import MMIO
+
+from pynq import MMIO  # pyright: ignore
 
 __all__ = ["UartAXI"]
 

@@ -1,19 +1,19 @@
+import mmap
 import os
 import sys
 import time
-import mmap
 import warnings
-import numpy as np
 from typing import ClassVar
 
+import numpy as np
+from paicorelib.framelib import FRAME_DTYPE, FrameArrayType
+
 from ..board_cfg import BoardCfg
-from ..common import RegFile, HostCtrlInterface
+from ..common import HostCtrlInterface, RegFile
 from ..exceptions import PAIBoardDMADeviceError, PAIBoardPlatformNotSupportedWarning
 from ..global_cfg import FRAME_VALUE_FILTER_LIST
-from ..types import FRAME_DTYPE, FrameArrayType
-from ..utils import wait_with_timeout, time_calc_addText
-from .dev_utils import XDMADevice, open_dev, send_dev, read_dev, open_mmap
-
+from ..utils import time_calc_addText, wait_with_timeout
+from .dev_utils import XDMADevice, open_dev, open_mmap, read_dev, send_dev
 
 __all__ = ["XDMACtrl"]
 

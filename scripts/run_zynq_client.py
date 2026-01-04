@@ -1,7 +1,9 @@
-import click
 import time
-from paiboard.zynq import ZynqClient
+
+import click
+
 from paiboard.common import ChipUartCfg
+from paiboard.zynq import ZynqClient
 
 DEFAULT_IP = "192.168.31.99"
 DEFAULT_PORT = 8080

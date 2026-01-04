@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 
+from paicorelib.framelib.types import FrameArrayType
+
 from paiboard.common.regfile_def import RegFile
 from paiboard.global_cfg import DEFAULT_N_OUTPUT_FRAMES
-from paiboard.types import FrameArrayType
 
 
 class HostCtrlInterface(ABC):

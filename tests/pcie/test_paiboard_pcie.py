@@ -1,4 +1,5 @@
 import pytest
+
 from paiboard import PAIBoardPCIe
 from paiboard.common.uart_cfg import get_available_serial_ports
 

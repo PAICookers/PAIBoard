@@ -1,8 +1,9 @@
-import numpy as np
 import os
 
+import numpy as np
+
 from paiboard.base import PAIBoard
-from paiboard.simulator.hwSimulator.hwSimulator import setOnChipNetwork, runSimulator
+from paiboard.simulator.hwSimulator.hwSimulator import runSimulator, setOnChipNetwork
 
 
 class PAIBoard_SIM(PAIBoard):

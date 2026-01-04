@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-import numpy as np
 
+import numpy as np
 
 REGFILE_DTYPE = np.uint32
 

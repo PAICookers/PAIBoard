@@ -14,8 +14,8 @@ from paicorelib import (
     SIM,
     Coord,
     OffCoreCfg,
-    OnCoreCfg,
     OfflineFrameGen,
+    OnCoreCfg,
 )
 from paicorelib import ReplicationId as RId
 from paicorelib import __version__ as plib_ver
@@ -23,19 +23,18 @@ from paicorelib.framelib.frame_defs import FrameHeader as FH
 from paicorelib.framelib.frame_defs import OfflineWorkFrame1Format as Off_WF1F
 from paicorelib.framelib.types import FRAME_DTYPE, PAYLOAD_DATA_DTYPE, FrameArrayType
 
-from tests.utils import (
-    file_not_exist_fail,
-    gen_random_array,
-    skip_if_in_ci_env,
-    skip_if_version_less_than,
-    skip_if_method_removed,
-)
-
 from paiboard.runtime import PAIRuntime
 from paiboard.runtime.runtime import (
     LEN_EX_FACTOR_KEY,
     VOLTAGE_DTYPE,
     get_len_ex_factor,
+)
+from tests.utils import (
+    file_not_exist_fail,
+    gen_random_array,
+    skip_if_in_ci_env,
+    skip_if_method_removed,
+    skip_if_version_less_than,
 )
 
 TEST_DATA_CFG_DIR = Path(__file__).parent / "test_data"

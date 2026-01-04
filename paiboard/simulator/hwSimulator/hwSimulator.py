@@ -1,8 +1,9 @@
-import numpy as np
 from collections import OrderedDict
+
+import numpy as np
+
 from .frame import Frame
-from .hwSim import Simulator, GLOBAL_CORE_ID, STARID
-from .hwSim import ISSYNC, ISEND
+from .hwSim import GLOBAL_CORE_ID, ISEND, ISSYNC, STARID, Simulator
 
 '''-----------------------------------------------------------------------'''
 '''                             RUN NETWORK                               '''
@@ -16,7 +17,7 @@ def runSimulator(simulator, dataFrames, txtFrame = False):
 
     dataFrames = [Frame.toInt(frame) for frame in dataFrames]
     frameList, helpInfo = framePartition(dataFrames)
-    
+
     dataNum = 0
     for h in helpInfo:
         dataNum += h
@@ -33,7 +34,7 @@ def runSimulator(simulator, dataFrames, txtFrame = False):
     #         print(simulator.outputBuffer)
     # print(outputFrames)
     # return outputFrames[0]  # maybe right
-    # return outputFrames  
+    # return outputFrames
 
     outputFrames = np.array([],dtype=np.uint64)
     for frames, h in zip(frameList, helpInfo):
@@ -68,7 +69,7 @@ def getTxTData(dataPath):
 '''-----------------------------------------------------------------------'''
 
 def parseConfig(configPath):
-    
+
     '''---------------------------------------------------------------'''
     '''                           offline                             '''
     '''---------------------------------------------------------------'''
@@ -88,7 +89,7 @@ def parseConfig(configPath):
             config[i] = load & dataMask[i]
             load >>= dataLen[i]
         return config
-    
+
     def parseConfig3(frameGroup, coreId):
         intFrame0 = int(frameGroup[0],2)
         neuronId = (intFrame0 >> 20) & ((1 << 10) - 1)
@@ -115,7 +116,7 @@ def parseConfig(configPath):
                 neuronId += 1
                 memBase = 0
         return  config
-    
+
     def parseConfig4_param(frameGroup, coreId):
         intFrame0 = int(frameGroup[0],2)
         # neuronId = (intFrame0 >> 20) & ((1 << 10) - 1)
@@ -145,7 +146,7 @@ def parseConfig(configPath):
                     # load >>= 214
 
         return config
-    
+
     def parseConfig4_weight(frameGroup, coreId, isSNN):
         intFrame0 = int(frameGroup[0],2)
         neuronId = (intFrame0 >> 20) & ((1 << 10) - 1)
@@ -199,7 +200,7 @@ def parseConfig(configPath):
                 LUT[i] -= (1 << 8)
             load >>= 8
         return  LUT
-    
+
     def parseConfig2ON(frameGroup, coreId):
 
         load = 0
@@ -210,8 +211,8 @@ def parseConfig(configPath):
         config = [0] * 18
 
         dataLen = [
-             2,  2, 32, 8,  8,  8, 
-            10, 10,  5, 5, 15, 15, 
+             2,  2, 32, 8,  8,  8,
+            10, 10,  5, 5, 15, 15,
             60,  1,  1, 1, 10, 16
         ]
 
@@ -246,13 +247,13 @@ def parseConfig(configPath):
                 5,  5, 5, 5, 5, 11, 10, 10,
             ]
         else:
-            dataLen = [ 
+            dataLen = [
                 32, 32, 32, 32, 32, 32,  3,  5,
                 5,  5,  5,  5,  5, 11, 10, 10
             ]
 
         signedData = [
-            1, 1, 1, 1, 1, 1, 0, 0, 
+            1, 1, 1, 1, 1, 1, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0
         ]
         dataMask = [(1 << (i)) - 1 for i in dataLen]
@@ -281,7 +282,7 @@ def parseConfig(configPath):
                 config[neuronId] = tmpConfig
                 neuronId += neuronUnit
         return config
-    
+
     def parseConfig4ON(frameGroup, coreId, bitWidth):
         # intFrame0 = int(frameGroup[0],2)
         intFrame0 = Frame.toInt(frameGroup[0])
@@ -327,8 +328,8 @@ def parseConfig(configPath):
     frameNum = len(frames)
     configs =  dict()
     i = 0
-    
-    
+
+
     while i < frameNum:
         frame = frames[i].strip()
         # intFrame = int(frame,2)
@@ -394,7 +395,7 @@ def parseConfig(configPath):
                         for j in range(neuronUnit):
                             if neuronId * neuronUnit + j not in configs[coreId]['neuron']:
                                 configs[coreId]['neuron'][neuronId * neuronUnit + j] = {
-                                    'parameter':None, 
+                                    'parameter':None,
                                     'weight':None
                                 }
                             configs[coreId]['neuron'][neuronId * neuronUnit + j]['parameter'] = neuronConfig
@@ -418,7 +419,7 @@ def parseConfig(configPath):
                             }
                         configs[coreId]['neuron'][newId]['parameter'] = neuronConfig
 
-            
+
 
             i = end
 
@@ -479,10 +480,10 @@ def parseConfig(configPath):
                             }
                         configs[coreId]['neuron'][newId]['weight'] = neuronConfig
             i = end
-        
+
         else:
             assert False, frameHead
-    
+
     return configs
 
 

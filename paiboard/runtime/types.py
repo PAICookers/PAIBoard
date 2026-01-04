@@ -2,13 +2,16 @@ import ast
 from typing import TypedDict
 
 from paicorelib import OffCoreCfg, OnCoreCfg
-from paicorelib.coordinate import ChipCoord, Coord, CoreType, ReplicationId as RId
-from paicorelib.routing_defs import get_multicast_cores
+from paicorelib.coordinate import ChipCoord, Coord, CoreType
+from paicorelib.coordinate import ReplicationId as RId
 from paicorelib.framelib.frame_defs import (
     OfflineWorkFrame1Format as Off_WF1F,
+)
+from paicorelib.framelib.frame_defs import (
     OnlineWorkFrame1Format_1 as On_WF1F_1,
 )
 from paicorelib.framelib.types import FrameArrayType
+from paicorelib.routing_defs import get_multicast_cores
 
 CoordStr = str
 ChipCoordStr = CoordStr

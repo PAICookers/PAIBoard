@@ -1,16 +1,16 @@
-from collections import UserList
 import time
+from collections import UserList
 from typing import ClassVar
-import numpy as np
-from pynq import DefaultHierarchy, MMIO, allocate
-from pynq.lib import AxiGPIO, DebugBridge
 
-from paiboard.common import RegFile, ChipUartCfg
-from paiboard.types import FRAME_DTYPE, FrameArrayType
+import numpy as np
+from paicorelib.framelib import FRAME_DTYPE, FrameArrayType
+from pynq import MMIO, DefaultHierarchy, allocate  # pyright: ignore
+from pynq.lib import AxiGPIO  # pyright: ignore
+
+from paiboard.common import ChipUartCfg, RegFile
 from paiboard.utils import wait_with_timeout
 
 from .uartlite import UartAXI
-
 
 N_BYTE_UART_DEBUG_EXTRA_RETURN = 19
 

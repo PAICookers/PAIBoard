@@ -1,12 +1,8 @@
-"""
-NOTE: This code will be used in both host & zynq platform(armv7l).
-    The version of python on these two platforms are different.
-"""
-
-from enum import IntEnum, unique
 import binascii
-import numpy as np
 import socket
+from enum import IntEnum, unique
+
+import numpy as np
 
 PayloadType = bytes | np.ndarray
 ZYNQ_PACKET_BYTEORDER = "big"  # x86_64 default

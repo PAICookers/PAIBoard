@@ -1,4 +1,5 @@
 import pytest
+
 from paiboard.common.uart_cfg import ChipUartCfg, get_available_serial_ports
 
 

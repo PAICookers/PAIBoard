@@ -1,4 +1,5 @@
 from abc import abstractmethod
+
 from paiboard.common.ctrl_intf_abc import HostCtrlInterface
 
 

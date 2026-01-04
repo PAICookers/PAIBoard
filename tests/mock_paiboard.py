@@ -1,28 +1,26 @@
+import sys
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 import numpy as np
-
 from paicorelib.coordinate import CoordLike
+from paicorelib.framelib import FrameArrayType
+
 from paiboard.base import PAIBoard
 from paiboard.common import HostCtrlInterface
 from paiboard.runtime import PAIRuntime
-from paiboard.types import FrameArrayType
-from tests.utils import gen_random_array
+
+if sys.version_info >= (3, 12):
+    from typing import override
+else:
+    from typing_extensions import override
 
 
 class MockCtrlIntf(HostCtrlInterface):
     def __init__(self) -> None:
-        self._regs: dict[int, int] = {}
-        self.writes: list[tuple[int, int]] = []
-        self.reads: list[int] = []
-        self.sent_frames: list[tuple[FrameArrayType, dict[str, Any]]] = []
-        self.send_and_recv_calls: list[
-            tuple[FrameArrayType, int | None, dict[str, Any]]
-        ] = []
-        self.reset_chips: list[tuple[int, ...]] = []
-        self.running = True
+        self.running = False
+        self.open()
 
     def open(self, *args, **kwargs) -> None:
         self.running = True
@@ -31,36 +29,24 @@ class MockCtrlIntf(HostCtrlInterface):
         self.running = False
 
     def reset_regfile(self) -> None:
-        for r in self._regs:
-            self._regs[r] = 0
+        pass
 
     def reset_chip(self, *chip_idx: int) -> None:
-        self.reset_chips.append(chip_idx)
+        pass
 
     def write_reg(self, addr: int, value: int) -> None:
-        self._regs[addr] = value
-        self.writes.append((addr, value))
+        pass
 
     def read_reg(self, addr: int) -> int:
-        self.reads.append(addr)
-        return self._regs.get(addr, 0)
+        return 0
 
     def send_frames(self, frames: FrameArrayType, **kwargs) -> int:
-        self.sent_frames.append((frames, kwargs))
-        # Mimic hardware: return number of bytes sent.
-        if hasattr(frames, "nbytes"):
-            return int(frames.nbytes)
-        return int(len(frames))
+        return 0
 
     def send_and_recv_frames(
         self, frames: FrameArrayType, recv_size: int | None = None, **kwargs
     ) -> FrameArrayType:
-        self.send_and_recv_calls.append((frames, recv_size, kwargs))
-        size = recv_size if recv_size is not None else frames.size
-        return np.zeros(
-            int(size),
-            dtype=frames.dtype if isinstance(frames, np.ndarray) else np.uint64,
-        )
+        return np.zeros_like(frames)
 
 
 class MockPAIBoard(PAIBoard):
@@ -90,6 +76,7 @@ class MockPAIBoard(PAIBoard):
             debug_mode=debug_mode,
         )
 
+    @override
     def chip_hw_inference(
         self,
         init: bool,
@@ -100,7 +87,7 @@ class MockPAIBoard(PAIBoard):
         recv_max_size: int | None = None,
         **kwargs,
     ) -> FrameArrayType:
-        """Take over the `PAIBoard.chip_hw_inference()`, return the fake result."""
+        """Override the `PAIBoard.chip_hw_inference()`, return the fake result."""
         onode = list(self.output_rtcfg_map.keys())[0]
         oshape = self.output_rtcfg_map[onode].output_shape
         tpl = self.output_rtcfg_map[onode].template

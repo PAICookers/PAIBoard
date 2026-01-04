@@ -1,9 +1,10 @@
 from copy import deepcopy
-import time
-from tqdm import tqdm
+
 import numpy as np
+from tqdm import tqdm
+
+from .frame import MASK, Frame, FrameKind
 from .hwConfig import Hardware
-from .frame import Frame, FrameKind, MASK
 
 PRE_COUNTER_MAX = 31
 POST_COUNTER_MAX = 31
@@ -43,7 +44,7 @@ def AXONID(intFrame):
 
 def SLOTID(intFrame):
     return Frame.getSlotId(intFrame)
-    
+
 def DATAID(intFrame):
     return Frame.getData(intFrame)
 
@@ -79,7 +80,7 @@ class Neuron:
         self.chipId = chipId
         self.coreId = coreId
         self.neuronId = neuronId
-        return 
+        return
     def setInit(self):
         return
 
@@ -99,7 +100,7 @@ class OfflineNeuron(Neuron):
                 tmp = deepcopy(cores)
                 for c in tmp:
                     cores.add(c ^ star)
-        
+
         self.spikeFormats = list()
         for core in cores:
             spikeFormat = \
@@ -133,14 +134,14 @@ class OfflineNeuron(Neuron):
                 if w != 0:
                     self.weights[i].append(w)
                     self.weightPos[i].append(j)
-                
+
     def truncRelu(self):
         if self.vjtPre <= 0 or self.vjtPre < self.thresholdPos:
             return 0
         if self.vjtPre >= self.truncEnd:
             return (1 << 8) - 1
         return min((int(self.vjtPre) >> self.shiftR), self.truncMask) << self.shiftL
-    
+
     def compute(
         self, timeStep, buffer, LCN, SNN_EN, spikeWidth, slotBase, maxPool
     ):
@@ -188,7 +189,7 @@ class OfflineNeuron(Neuron):
 
     def setInit(self):
         self.vjtPre = 0
-    
+
     def dumpWeight(self, LCN_id, axonId):
         raise NotImplementedError()
 
@@ -206,7 +207,7 @@ class OfflineNeuron(Neuron):
                 tmp = deepcopy(cores)
                 for c in tmp:
                     cores.add(c ^ star)
-        
+
         spikeFormats = list()
         for core in cores:
             spikeFormat = \
@@ -251,7 +252,7 @@ class OnlineNeuron(Neuron):
         destStar = (para[11] << Hardware.COREY) | para[12]
         destAxon = para[13]
 
-        
+
         destCores = multiCast(destCore, destStar, Hardware.COREBIT, None)
 
         self.dataFrameFormats = list()
@@ -261,7 +262,7 @@ class OnlineNeuron(Neuron):
                     destChip, coreId, destStar, destAxon
                 )
             )
-        
+
 
         self.plascityBegs = list()
         self.plascityEnds = list()
@@ -279,7 +280,7 @@ class OnlineNeuron(Neuron):
         self.spikes = 0
 
         return
-    
+
     def printNeuron(self):
         print(f"------------------[{self.chipId},{self.coreId},{self.neuronId}]---------------------")
         # print(f"weight = {self.weights[:,:16]}")
@@ -288,12 +289,12 @@ class OnlineNeuron(Neuron):
         print(f"threshold = {self.thresholdPos}")
         print(f"memFloor = {self.floorV}")
         print("------------------------------------------------------------------------------------------")
-    
+
     def compute(
         self, timeStep, buffer, LCN, slotBase, lateralVal, onlineMode,
         preTrace, LUT, lowerWeight, upperWeight
     ):
-        
+
         update = np.sum(self.weights * buffer) + self.leakV
         self.vjtPre += update - lateralVal
         self.vjtPre = max(self.vjtPre, self.floorV)
@@ -318,7 +319,7 @@ class OnlineNeuron(Neuron):
             self.postTrace = min(self.postTrace + 1, POST_COUNTER_MAX)
         if onlineMode:
             self.updateWeight(preTrace, LUT, lowerWeight, upperWeight, isSpike)
-    
+
         return outputs
 
     def updateWeight(self,preTrace, LUT, lowerWeight, upperWeight, postSpike):
@@ -349,7 +350,7 @@ class OnlineNeuron(Neuron):
             end = self.plascityEnds[i] + 1
             self.weights[i, beg: end] -= tmpWeightDecay[i, beg:end]
         self.weights = self.weights.clip(lowerWeight, upperWeight)
-    
+
     def setInit(self):
         self.vjtPre = 0
 
@@ -360,15 +361,15 @@ class OnlineNeuron(Neuron):
 
     def setEnd(self, preFlag, weightDecay, lowerWeight, upperWeight):
         self.doWeightDecay(preFlag, weightDecay, lowerWeight, upperWeight)
-    
+
     def dumpWeight(self, LCN_id, axonId):
         return self.weights[LCN_id, axonId]
 
 class Core:
     def __init__(self, chipId, coreId, *coreConfig):
-        #coreConfig: 
+        #coreConfig:
         #   timeNum, axonNum, tickWaitStart, tickWaitEnd
-        #   
+        #
         self.chipId = chipId
         self.coreId = coreId
 
@@ -381,22 +382,22 @@ class Core:
         self.neurons = list()
         self.timeStep = 0
         self.outputBuffer = list()
-        
+
 
         return
 
     def checkActive(self, timeId):
         return (self.tickWaitStart > 0) and \
             (timeId >= self.tickWaitStart and (self.timeStep < self.tickWaitEnd or self.tickWaitEnd == 0))
-    
+
     def compute(self, timeId):
-        assert False, f"Your Core class must override func compute(self, timeId).\n"
-    
+        assert False, "Your Core class must override func compute(self, timeId).\n"
+
     def initNeurons(self, neuronConfigs):
-        assert False, f"Your Core class must override func initNeurons(self, neuronConfigs).\n"
+        assert False, "Your Core class must override func initNeurons(self, neuronConfigs).\n"
 
     def updateState(self, spike):
-        assert False, f"Your Core class must override func updateState(self, spike).\n"
+        assert False, "Your Core class must override func updateState(self, spike).\n"
 
     def setInit(self):
         self.inputBuffer[:,:] = 0
@@ -418,9 +419,9 @@ class OnlineCore(Core):
         timeStepNum = 8
         axonNum = 1024
         coreConfig = [
-            timeStepNum, 
-            axonNum, 
-            configs['core'][10], 
+            timeStepNum,
+            axonNum,
+            configs['core'][10],
             configs['core'][11]
         ]
         super().__init__(chipId, coreId, *coreConfig)
@@ -436,7 +437,7 @@ class OnlineCore(Core):
         self.leakageOrder = configs['core'][14]
         self.onlineMode   = configs['core'][15]
         # self.onlineMode   = 1
-        
+
         self.testChipAddr = configs['core'][16]
         self.LUT          = configs['LUT']
 
@@ -455,7 +456,7 @@ class OnlineCore(Core):
             self.initNeurons(configs['neuron'])
         else:
             assert self.tickWaitStart == 0
-    
+
     def initNeurons(self, neuronConfigs):
         completeNum = len(neuronConfigs) // (self.LCN * self.weightWidth)
         neuronId = 0
@@ -487,7 +488,7 @@ class OnlineCore(Core):
                     self.chipId, self.coreId, i, paras, weights,self.weightWidth, self.LCN
                 )
             )
-    
+
     def getInput(self, timeId):
         hardwareSlotNum = Hardware.getAttr("SLOTNUM", False)
         slotBeg = (self.LCN * self.timeStep) % hardwareSlotNum
@@ -497,7 +498,7 @@ class OnlineCore(Core):
     def compute(self, timeId):
         self.outputBuffer.clear()
         if not self.checkActive(timeId):
-            return 
+            return
         else:
             inputBuffer = self.getInput(timeId)
             self.updatePreCounter(inputBuffer)
@@ -506,18 +507,18 @@ class OnlineCore(Core):
             lateralVal = self.lateralInhi * self.lateralOn
             for i, neuron in enumerate(self.neurons):
                 outputs = neuron.compute(
-                    self.timeStep, inputBuffer,  
+                    self.timeStep, inputBuffer,
                     self.LCN, slotBase, lateralVal, self.onlineMode,
                     self.preTraces, self.LUT, self.lowerWeight, self.upperWeight
                 )
                 self.outputBuffer += outputs
-            
+
             inputBuffer[:,:] = 0
             if self.onlineMode and len(self.outputBuffer) > 0:
                 self.outputBuffer += deepcopy(self.lateralFrames)
-    
+
             self.lateralOn = False
-        
+
     def updatePreCounter(self, inputBuffer):
         if self.onlineMode:
             slotNum = inputBuffer.shape[0]
@@ -531,7 +532,7 @@ class OnlineCore(Core):
     def setInit(self):
         super().setInit()
         return
-    
+
     def setBeg(self):
         if self.onlineMode:
             self.preTraces[:] = 0
@@ -539,7 +540,7 @@ class OnlineCore(Core):
             self.lateralOn = False
             for neuron in self.neurons:
                 neuron.setBeg()
-    
+
     def setEnd(self):
         if self.onlineMode:
             for neuron in self.neurons:
@@ -548,7 +549,7 @@ class OnlineCore(Core):
     def setLateral(self):
         if self.onlineMode:
             self.lateralOn = True
-    
+
     def receive(self, intFrame):
         if ISSTART(intFrame):
             self.setBeg()
@@ -626,7 +627,7 @@ class OfflineCore(Core):
     def compute(self, timeId):
         self.outputBuffer.clear()
         if not self.checkActive(timeId):
-            return 
+            return
         else:
             hardwareSlotNum = Hardware.getAttr("SLOTNUM", True)
             slotBeg = (self.LCN * self.timeStep) % hardwareSlotNum
@@ -643,16 +644,16 @@ class OfflineCore(Core):
             slotBase = self.targetLCN * self.timeStep
             for i, neuron in enumerate(self.neurons):
                 outputs = neuron.compute(
-                    self.timeStep, self.inputBuffer[slotBeg:slotEnd,:],  
+                    self.timeStep, self.inputBuffer[slotBeg:slotEnd,:],
                     self.LCN, self.SNN_EN, self.spikeWidth, slotBase, self.poolMax
                 )
                 self.outputBuffer += outputs
-            
+
             # paiflow origin
             self.inputBuffer[slotBeg : slotEnd, :] = 0
             # update
             # self.inputBuffer[:-1*self.LCN,:] = self.inputBuffer[self.LCN:,:]
-            
+
     def receive(self, intFrame):
         if ISDATA(intFrame):
             axon = AXONID(intFrame)
@@ -731,7 +732,7 @@ class Chip:
                 offChipSpikes.append(spike)
             else:
                 coreId = COREID(spike)
-                
+
                 num += 1
                 if coreId not in self.cores:
                     pass
@@ -761,8 +762,8 @@ class Chip:
                     # assert core in self.cores, f"{coreId}, {starId}, {cores} {self.cores.keys()}"
                     self.cores[core].receive(spike)
 
-        return 
-    
+        return
+
     def checkActive(self, timeId):
         if timeId > self.syncTimes and self.syncTimes > 0:
             return False
@@ -770,7 +771,7 @@ class Chip:
         for coreId, core in self.cores.items():
             active = active or core.checkActive(timeId)
         return active
-    
+
     def compute(self, timeId):
         if timeId > self.syncTimes and self.syncTimes > 0:
             return
@@ -780,27 +781,27 @@ class Chip:
         if timeId == self.debugTime:
             print("[info] begin to debug")
             self.debug()
-    
+
     def advanceTime(self, timeId):
         for coreId, core in self.cores.items():
             core.advanceTime(timeId)
 
     def setSyncTimes(self, syncTime):
         self.syncTimes = syncTime
-    
+
     def setClear(self):
         return
 
     def setInit(self):
         for core in self.cores.values():
             core.setInit()
-    
+
     def dumpWeight(self, coreId, completeNeuronId, LCN_id, axonId):
         val = self.cores[coreId].dumpWeight(
             completeNeuronId, LCN_id, axonId
         )
         return val
-    
+
     def debug(self):
         for coreId, config in tqdm(self.debugInfo.items(), "debug core parameters"):
             self.cores[coreId].debugNeuronParas(coreId, config['neuron'])
@@ -811,8 +812,8 @@ class Chip:
         self.debugTime = timeStep
         assert coreId not in self.debugInfo
         self.debugInfo[coreId] = config
-        
-    
+
+
 class Simulator:
     def __init__(self, TimestepVerbose):
         self.chips = dict()
@@ -832,7 +833,7 @@ class Simulator:
             self.chips[chipId].setConfig(realCoreId, config)
         cores = list(configs.keys())
         # draw(cores,"tmp.png")
-    
+
     def setDebug(self, debugFrameDir):
         self.debugFrameDir = debugFrameDir
 
@@ -906,7 +907,7 @@ class Simulator:
                 self.outputBuffer.append(spike)
 
         # assert False
-        
+
     def advanceTime(self, timeId):
         for chipId, chip in self.chips.items():
             chip.advanceTime(timeId)
@@ -928,11 +929,11 @@ class Simulator:
             self.setInputs(self.buffer)
 
             self.buffer.clear()
-            
+
             # update clock
             self.advanceTime(timeStep)
             timeStep += 1
-            
+
             if(self.TimestepVerbose):
                 print("TimeStep:" + str(timeStep - 1) + "\r",end="")
             #determine if all the chips stop or not
@@ -1031,7 +1032,7 @@ def parseTestFrames(testFramePath):
         starId = STARID(intFrame)
         assert starId == 0
         assert Frame.isKind(intFrame, FrameKind.TEST3_OUT)
-        frameNum1 = Frame.getFrameNum(intFrame) 
+        frameNum1 = Frame.getFrameNum(intFrame)
         end = i + frameNum1 + 1
         config = parseTest3(frames[i:end])
 

@@ -1,22 +1,9 @@
 from pathlib import Path
-from pynq import Overlay
-from paiboard.types import FrameArrayType
+
+from paicorelib.framelib import FrameArrayType
+from pynq import Overlay  # pyright: ignore
 
 from .hw_hierarchy import HwDatapathHier
-
-class Overlay:
-    def __init__(
-        self,
-        bitfile_name: str,
-        dtbo=None,
-        download=True,
-        ignore_version=False,
-        device=None,
-        gen_cache=False,
-    ): ...
-    def is_loaded(self) -> bool: ...
-    def reset(self) -> None: ...
-    def load_ip_data(self, ip_name: str, data: str) -> None: ...
 
 class ZynqPlatformOverlay(Overlay):
     pl_datapath: HwDatapathHier

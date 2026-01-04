@@ -1,7 +1,7 @@
 import os
 import time
 import tracemalloc
-from collections.abc import Callable, Iterable, Sequence, Generator
+from collections.abc import Callable, Generator, Iterable, Sequence
 from contextlib import contextmanager
 from importlib.metadata import version
 from pathlib import Path
@@ -61,14 +61,14 @@ def measure_peak_memory(func, *args, **kwargs) -> float:
 def file_not_exist_fail(_fp: str | Path) -> None:
     """Raise a `pytest.fail` if the file does not exist."""
     fp = Path(_fp)
-    if not Path.is_file(fp) or not fp.exists():
+    if (not Path.is_file(fp)) or (not fp.exists()):
         pytest.fail(f"{fp} is not a file or does not exist.")
 
 
 def dir_not_exist_fail(_fp: str | Path) -> None:
     """Raise a `pytest.fail` if the directory does not exist."""
     fp = Path(_fp)
-    if not Path.is_dir(fp) or not fp.exists():
+    if (not Path.is_dir(fp)) or (not fp.exists()):
         pytest.fail(f"{fp} is not a directory or does not exist.")
 
 

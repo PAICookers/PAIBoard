@@ -1,18 +1,18 @@
-from collections.abc import Callable
-from typing import TypeVar
-import numpy as np
 import importlib
 import time
 import warnings
-
+from collections.abc import Callable
 from contextlib import contextmanager
 from functools import wraps
 from types import ModuleType
+from typing import TypeVar
+
+import numpy as np
 
 from .exceptions import (
-    PAIBoardTimeoutError,
     PAIBoardFileNotFoundError,
     PAIBoardOptionalFileMissingWarning,
+    PAIBoardTimeoutError,
 )
 
 FT = TypeVar("FT", bound=Callable)

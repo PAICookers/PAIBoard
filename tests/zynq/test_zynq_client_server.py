@@ -1,7 +1,8 @@
-import pytest
 import numpy as np
+import pytest
 from paicorelib import Coord
-from paiboard.common import RegFile, ChipUartCfg
+
+from paiboard.common import ChipUartCfg, RegFile
 from paiboard.global_cfg import CONFIG_FILE_DTYPE
 from paiboard.zynq import ZynqClient
 from tests.utils import file_not_exist_fail

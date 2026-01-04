@@ -1,8 +1,9 @@
+import shutil
 import warnings
+from contextlib import nullcontext
+
 import numpy as np
 import pytest
-import shutil
-from contextlib import nullcontext
 
 from paiboard.base import PAIBoard
 from paiboard.exceptions import (
@@ -15,6 +16,7 @@ from paiboard.global_cfg import (
     DEFAULT_FNAME_INPUT_NODE_INFO,
     DEFAULT_FNAME_OUTPUT_DEST_INFO,
 )
+
 from .mock_paiboard import MockPAIBoard
 from .utils import dir_not_exist_fail, gen_random_array
 
