@@ -1,0 +1,41 @@
+name: Release Drafter
+
+on:
+  push:
+    tags:
+      - v*
+  pull_request:
+    branches:
+      - master
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  update_release_draft:
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: master
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Install Python 3.13
+        run: uv python install 3.13
+
+      - name: Set tag name
+        run: echo "TAG_NAME=v$(uv version --short)" >> $GITHUB_ENV
+
+      - uses: release-drafter/release-drafter@v6
+        with:
+          name: ${{ env.TAG_NAME }}
+          tag: ${{ env.TAG_NAME }}
+          publish: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
