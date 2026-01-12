@@ -1,13 +1,15 @@
 import mmap
 import os
+import os
 import sys
+import time
+import warnings
 from contextlib import contextmanager
 from enum import Enum, unique
 
 import numpy as np
 
-
-@unique
+from ..exceptions import PAIBoardDMADeviceError
 class XDMADevice(Enum):
     CTRL = "control"
     BYPASS = "bypass"
@@ -26,7 +28,24 @@ def open_dev(device: str, flags: int):
 
 
 def send_dev(fd: int, buffer: np.ndarray) -> int:
-    size = os.write(fd, buffer.tobytes())
+    attempts = 0
+    size = 0
+    while attempts < 3:
+        try:
+            size = os.write(fd, buffer.tobytes())
+            break
+        except OSError as exc:
+            attempts += 1
+            warnings.warn(
+                f"XDMA write failed (attempt {attempts}/3) for fd {fd}: {exc}",
+                stacklevel=2,
+            )
+            if attempts >= 3:
+                raise PAIBoardDMADeviceError(
+                    f"failed to write {buffer.nbytes} bytes to fd {fd}: {exc}"
+                ) from exc
+            time.sleep(5)
+
     if size != buffer.nbytes:
         raise ValueError(f"expected send {buffer.nbytes} bytes, but sent {size} bytes")
 

@@ -115,8 +115,8 @@ class XDMACtrl(HostCtrlInterface):
 
     @time_calc_addText("SendFrame     ")
     def send_frames(self, frames: FrameArrayType, **kwargs) -> int:
-        kwargs.setdefault("multi_channel_enable", False)
-        self.write_reg(RegFile.SINGLE_CHANNEL, int(~kwargs["multi_channel_enable"]))
+        multi_channel_enable = bool(kwargs.setdefault("multi_channel_enable", False))
+        self.write_reg(RegFile.SINGLE_CHANNEL, 0 if multi_channel_enable else 1)
 
         self.write_reg(RegFile.SEND_LEN, frames.size)
         size = self._send_dma(frames)
