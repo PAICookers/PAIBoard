@@ -1,6 +1,5 @@
 import mmap
 import os
-import os
 import sys
 import time
 import warnings
@@ -10,6 +9,9 @@ from enum import Enum, unique
 import numpy as np
 
 from ..exceptions import PAIBoardDMADeviceError
+
+
+@unique
 class XDMADevice(Enum):
     CTRL = "control"
     BYPASS = "bypass"
