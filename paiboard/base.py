@@ -26,6 +26,8 @@ from .global_cfg import (
     DEFAULT_FNAME_CORE_PARAMS_CONF,
     DEFAULT_FNAME_GRAPH_INFO,
     DEFAULT_FNAME_INPUT_NODE_INFO,
+    DEFAULT_FNAME_LEARNING_MODE_DIS_CFG_FILE_WO_SUFFIX,
+    DEFAULT_FNAME_LEARNING_MODE_EN_CFG_FILE_WO_SUFFIX,
     DEFAULT_FNAME_NEURON_PHY_LOC,
     DEFAULT_FNAME_OUTPUT_DEST_INFO,
 )
@@ -126,6 +128,9 @@ class PAIBoard:
         self._load_and_parse_input_node_info()
         self._load_and_parse_output_dest_info()
         self._assert_single_io_node()
+
+        # Load configuration files for switching the working mode of online cores
+        self._load_learning_mode_switch_cfg_files()
 
         # Determine the inference mode
         self.batch_mode = batch_mode
@@ -230,6 +235,30 @@ class PAIBoard:
         raise PAIBoardFileNotFoundError(
             f"necessary config file not found: {DEFAULT_FNAME_CONFIG_FILE_WO_SUFFIX}"
         )
+
+    def _load_learning_mode_switch_cfg_files(self) -> None:
+        """Auto-detect & load the config files with suffix `.npy`, `.bin`, or `.txt` for switching the working mode of online cores .
+
+        NOTE: only used if the deployed network includes online cores for STDP learning.
+        """
+        en_learning_fp_wo_suffix = (
+            self.working_dir / DEFAULT_FNAME_LEARNING_MODE_EN_CFG_FILE_WO_SUFFIX
+        )
+        dis_learning_fp_wo_suffix = (
+            self.working_dir / DEFAULT_FNAME_LEARNING_MODE_DIS_CFG_FILE_WO_SUFFIX
+        )
+        self.en_learning_frames = None
+        self.dis_learning_frames = None
+
+        for ext in [".npy", ".bin", ".txt"]:
+            if (p := en_learning_fp_wo_suffix.with_suffix(ext)).exists():
+                self.en_learning_frames = np.fromfile(p, dtype=CFG_FILE_DTYPE)
+                break
+
+        for ext in [".npy", ".bin", ".txt"]:
+            if (p := dis_learning_fp_wo_suffix.with_suffix(ext)).exists():
+                self.dis_learning_frames = np.fromfile(p, dtype=CFG_FILE_DTYPE)
+                break
 
     def _valid_timestep_limit(self) -> None:
         node_rtcfg = self.input_rtcfg_map[list(self.inode_attrs_map.keys())[0]]
@@ -912,6 +941,29 @@ class PAIBoard:
             )
             for neu in self.neu_vol_reading_frames
         }
+
+    def learning_mode(self, enable: bool = True) -> None:
+        """Switch the working mode for online cores. If `enable` is true, enable the learning mode.  \
+            Otherwise, enbale the inference mode.
+        """
+        if enable:
+            if self.en_learning_frames is None:
+                raise RuntimeError(
+                    "configuration file for enabling learning mode is not provided."
+                )
+
+            self.intf.send_frames(self.en_learning_frames)
+        else:
+            if self.dis_learning_frames is None:
+                raise RuntimeError(
+                    "configuration file for disabling learning mode is not provided."
+                )
+
+            self.intf.send_frames(self.dis_learning_frames)
+
+    def inference_mode(self) -> None:
+        """Enable the inference mode (or disabling the learning mode) for online cores."""
+        return self.learning_mode(False)
 
     # Auxiliary functions.
 
