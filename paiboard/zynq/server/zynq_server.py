@@ -85,10 +85,10 @@ class ZynqServer:
                 while self.running:
                     try:
                         recv_cmd, recv_payload = ZynqPacket.recv_from_client(client)
-                        print(f"got command {recv_cmd.name}, payload {recv_payload}")
                         self.process_cmd(recv_cmd, recv_payload, client)
 
                         if recv_cmd == CMD.QUIT:
+                            print("Quit because of receiving QUIT command")
                             break
                     except Exception:
                         # print(e)

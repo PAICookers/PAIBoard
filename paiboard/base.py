@@ -2,14 +2,13 @@ import atexit
 import json
 import warnings
 from collections.abc import Sequence
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, ClassVar, Literal, overload
 
 import numpy as np
 from paicorelib import ChipCoord, CoordLike, OfflineFrameGen, to_coord, to_coords
 from paicorelib.framelib import PAYLOAD_DATA_DTYPE, FrameArrayType
-from paicorelib.framelib.frame_defs import FrameFormat as FF
+from paicorelib.framelib.frame_defs import FF
 from paicorelib.framelib.frame_defs import FrameHeader as FH
 
 from .board_cfg import ChipSOMType
@@ -21,8 +20,8 @@ from .exceptions import (
     PAIBoardRuntimeWarning,
 )
 from .global_cfg import (
-    CONFIG_FILE_DTYPE,
-    DEFAULT_FNAME_CONFIG_FILE_WO_SUFFIX,
+    CFG_FILE_DTYPE,
+    DEFAULT_FNAME_CFG_FILE_WO_SUFFIX,
     DEFAULT_FNAME_CORE_PARAMS_CONF,
     DEFAULT_FNAME_GRAPH_INFO,
     DEFAULT_FNAME_INPUT_NODE_INFO,
@@ -53,6 +52,7 @@ from .types import (
     VoltageType,
 )
 from .utils import check_requirements, time_it
+from .zynq import ZynqClient
 
 __all__ = ["PAIBoard"]
 
@@ -122,8 +122,8 @@ class PAIBoard:
         # Determine the chip of source signals
         self.source_chip = self._get_source_chip(self.target_chip_list)
 
-        # Detect configuration file path
-        self.cfg_fp = self._auto_detect_config_file()
+        # Detect configuration file path, but load the frames later.
+        self.cfg_fp = self._auto_detect_cfg_file()
         # Load & parse i/o info files
         self._load_and_parse_input_node_info()
         self._load_and_parse_output_dest_info()
@@ -161,15 +161,21 @@ class PAIBoard:
                 f"the device of {self.__class__.__name__} is not running."
             )
 
-        atexit.register(self._close)
-
-    def _close(self) -> None:
-        self.intf.close()
+        atexit.register(self.close)
 
     def reset(self) -> None:
         """Reset the chip(s) & the regfile."""
         self.intf.reset_chip()
         self.intf.reset_regfile()
+
+    def close(self, quit_the_server: bool = False) -> None:
+        if not self.intf.running:
+            return
+
+        if isinstance(self.intf, ZynqClient):
+            self.intf.close(quit_the_server)  # Only zynq client has quit()
+        else:
+            self.intf.close()
 
     def _load_and_parse_graph_info(self) -> None:
         if not (p := self.working_dir / DEFAULT_FNAME_GRAPH_INFO).exists():
@@ -226,14 +232,15 @@ class PAIBoard:
         # The first chip coordinate in the 'core_params.json' is the source of global signals
         return coordstr2coord(next(iter(core_params)))
 
-    def _auto_detect_config_file(self) -> Path:
-        fp_wo_suffix = self.working_dir / DEFAULT_FNAME_CONFIG_FILE_WO_SUFFIX
+    def _auto_detect_cfg_file(self) -> Path:
+        """Auto-detect the config file with suffix `.npy`, `.bin`, or `.txt`."""
+        fp_wo_suffix = self.working_dir / DEFAULT_FNAME_CFG_FILE_WO_SUFFIX
         for ext in [".npy", ".bin", ".txt"]:
             if (p := fp_wo_suffix.with_suffix(ext)).exists():
                 return p
 
         raise PAIBoardFileNotFoundError(
-            f"necessary config file not found: {DEFAULT_FNAME_CONFIG_FILE_WO_SUFFIX}"
+            f"necessary config file not found: {DEFAULT_FNAME_CFG_FILE_WO_SUFFIX}"
         )
 
     def _load_learning_mode_switch_cfg_files(self) -> None:
@@ -433,7 +440,7 @@ class PAIBoard:
 
     def chip_hw_model_download(self, **kwargs) -> None:
         """Download configuration frames to the chip."""
-        cfg_frames = np.fromfile(self.cfg_fp, dtype=CONFIG_FILE_DTYPE)
+        cfg_frames = np.fromfile(self.cfg_fp, dtype=CFG_FILE_DTYPE)
 
         print("----------------------------------")
         print("----------PAICORE CONFIG----------")
@@ -985,16 +992,6 @@ class PAIBoard:
     #         img_num: Number of images processed
     #     """
     #     print_time(img_num)
-
-
-@dataclass
-class ToolchainGenInfo:
-    cfg_fp: Path | None = field(default=None)
-    input: InputNodeAttrsMap = field(default_factory=InputNodeAttrsMap)
-    output: OutputDestAttrsMap = field(default_factory=OutputDestAttrsMap)
-    neu_vol_phy_loc: dict[NodeName, NeuPhyLocMap] = field(default_factory=dict)
-    clk_en_l2_dict: dict[ChipCoord, list[int]] = field(default_factory=dict)
-    target_chip_list: list[ChipCoord] = field(default_factory=list)
 
 
 def filter_frame_type(

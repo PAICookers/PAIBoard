@@ -11,7 +11,7 @@ from paiboard.exceptions import (
     PAIBoardOptionalFileMissingWarning,
 )
 from paiboard.global_cfg import (
-    DEFAULT_FNAME_CONFIG_FILE_WO_SUFFIX,
+    DEFAULT_FNAME_CFG_FILE_WO_SUFFIX,
     DEFAULT_FNAME_CORE_PARAMS_CONF,
     DEFAULT_FNAME_INPUT_NODE_INFO,
     DEFAULT_FNAME_OUTPUT_DEST_INFO,
@@ -32,7 +32,7 @@ class TestPAIBoard:
             (DEFAULT_FNAME_CORE_PARAMS_CONF, PAIBoardFileNotFoundError),
             (DEFAULT_FNAME_INPUT_NODE_INFO, PAIBoardFileNotFoundError),
             (DEFAULT_FNAME_OUTPUT_DEST_INFO, PAIBoardFileNotFoundError),
-            (f"{DEFAULT_FNAME_CONFIG_FILE_WO_SUFFIX}.bin", PAIBoardFileNotFoundError),
+            (f"{DEFAULT_FNAME_CFG_FILE_WO_SUFFIX}.bin", PAIBoardFileNotFoundError),
         ],
     )
     def test_init_missing_required_files_raises(
@@ -209,7 +209,3 @@ class TestPAIBoard:
 
         # Check the size of batch_size & timestep
         assert oshape_with_bs_ts[:-1] == out.shape[:-1]
-
-
-class TestPAIBoardZynq:
-    pass

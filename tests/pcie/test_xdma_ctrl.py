@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from paiboard.common import RegFile
-from paiboard.global_cfg import CONFIG_FILE_DTYPE
+from paiboard.global_cfg import CFG_FILE_DTYPE
 from paiboard.pcie.xdma_ctrl import XDMACtrl
 from tests.utils import file_not_exist_fail, skip_if_in_ci_env
 
@@ -38,5 +38,5 @@ class TestXDMACtrl:
         config_fp = model_dir / "config_all.bin"
         file_not_exist_fail(config_fp)
 
-        cfg_frames = np.fromfile(config_fp, dtype=CONFIG_FILE_DTYPE)
+        cfg_frames = np.fromfile(config_fp, dtype=CFG_FILE_DTYPE)
         xdma.send_frames(cfg_frames)

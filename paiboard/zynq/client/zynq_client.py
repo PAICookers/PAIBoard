@@ -86,7 +86,7 @@ class ZynqClient(ZynqCtrlInterface):
         recv_bytes = self._send_payload(CMD.READ_REG, payload)
         return int.from_bytes(recv_bytes, byteorder=ZYNQ_PACKET_BYTEORDER)
 
-    def reset_chip(self) -> None:
+    def reset_chip(self, *chip_idx: int) -> None:
         """Reset the chip or chip array. Format: CHIP_RESET.
 
         The server returns: CHIP_RESET.

@@ -3,7 +3,7 @@ import pytest
 from paicorelib import Coord
 
 from paiboard.common import ChipUartCfg, RegFile
-from paiboard.global_cfg import CONFIG_FILE_DTYPE
+from paiboard.global_cfg import CFG_FILE_DTYPE
 from paiboard.zynq import ZynqClient
 from tests.utils import file_not_exist_fail
 
@@ -44,12 +44,12 @@ class TestZynqClientServer:
     ):
         zynq = zynq_client_instance
 
-        #  Target is (0,0), output to (2,0)
+        # Target is (0,0), output to (2,0)
         model_dir = toolchain_build_dir / "test_001_Conv1d"
         config_fp = model_dir / "config_all.bin"
         file_not_exist_fail(config_fp)
 
-        cfg_frames = np.fromfile(config_fp, dtype=CONFIG_FILE_DTYPE)
+        cfg_frames = np.fromfile(config_fp, dtype=CFG_FILE_DTYPE)
 
         # UART
         chip_list = [Coord(0, 0), Coord(0, 1), Coord(1, 1), Coord(1, 0)]

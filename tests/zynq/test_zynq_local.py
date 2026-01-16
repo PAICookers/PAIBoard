@@ -3,7 +3,7 @@ import pytest
 from paicorelib import Coord
 
 from paiboard.common import ChipUartCfg, RegFile
-from paiboard.global_cfg import CONFIG_FILE_DTYPE
+from paiboard.global_cfg import CFG_FILE_DTYPE
 from tests.utils import file_not_exist_fail
 
 pynq = pytest.importorskip("pynq", reason="tests not running on zynq platform")
@@ -48,7 +48,7 @@ class TestZynqLocal:
         config_fp = toolchain_build_dir / test_name / "config_all.bin"
         file_not_exist_fail(config_fp)
 
-        cfg_frames = np.fromfile(config_fp, dtype=CONFIG_FILE_DTYPE)
+        cfg_frames = np.fromfile(config_fp, dtype=CFG_FILE_DTYPE)
 
         # UART
         chip_list = [Coord(0, 0), Coord(0, 1), Coord(1, 1), Coord(1, 0)]

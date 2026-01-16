@@ -29,7 +29,7 @@ class EnetCommand(IntEnum):
     SEND_AND_RECV = 1  # Send to the server & ask for a response
     WRITE_REG = 3
     READ_REG = 4
-    CHIP_RESET = 5
+    CHIP_RESET = 5  # Reset chip #i or all chips
     CHIP_UART = 6
     REGFILE_RESET = 7
     QUIT = 99
