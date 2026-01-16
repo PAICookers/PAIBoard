@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Literal
 
-from paicorelib.coordinate import CoordLike
+from paicorelib.coordinate import CoordLike, to_coord
 
 from ..base import PAIBoard
 from ..board_cfg import ChipSOMType
@@ -16,6 +16,16 @@ class PAIBoardZynqBase(PAIBoard):
     chip_som_type = ChipSOMType.ARRAY_2X2
     intf: ZynqCtrlInterface
 
+    def _try_get_clk_en_L2_dict(
+        self, clk_en_L2: list[int] | None, chip_coord: CoordLike
+    ) -> list[int] | None:
+        if clk_en_L2 is None:
+            chip_coord = to_coord(chip_coord)
+            if chip_coord in self.clk_en_l2_dict:
+                clk_en_L2 = self.clk_en_l2_dict[chip_coord]
+
+        return clk_en_L2
+
     def chip_array_uart_config(
         self,
         chip_coords: Sequence[CoordLike],
@@ -24,8 +34,12 @@ class PAIBoardZynqBase(PAIBoard):
     ) -> None:
         """Configure all chips in the array via UART."""
         self.intf.reset_chip()
+
         for i, chip_coord in enumerate(chip_coords):
-            self.chip_uart_config(i, chip_coord, clk_freq, debug_en=debug_en)
+            clk_en_L2 = self._try_get_clk_en_L2_dict(None, chip_coord)
+            self.chip_uart_config(
+                i, chip_coord, clk_freq, clk_en_L2=clk_en_L2, debug_en=debug_en
+            )
 
     def chip_uart_config(
         self,
@@ -37,6 +51,8 @@ class PAIBoardZynqBase(PAIBoard):
     ) -> None:
         """Configure a single chip via UART."""
         self.intf.reset_chip(idx)
+
+        clk_en_L2 = self._try_get_clk_en_L2_dict(clk_en_L2, chip_coord)
         uart_cmd = ChipUartCfg.gen_uart_cmd(
             chip_coord, clk_freq, clk_en_L2=clk_en_L2, debug=debug_en
         )
@@ -50,6 +66,7 @@ class PAIBoardZynqBase(PAIBoard):
         clk_freq: int = 240,
         clk_en_L2: list[int] | None = None,
     ) -> None:
+        clk_en_L2 = self._try_get_clk_en_L2_dict(clk_en_L2, chip_coord)
         uart_cmd = ChipUartCfg.gen_uart_cmd(
             chip_coord, clk_freq, clk_en_L2=clk_en_L2, debug=True
         )

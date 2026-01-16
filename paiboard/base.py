@@ -176,11 +176,11 @@ class PAIBoard:
         with p.open("r") as f:
             self.graph_metadata: dict[str, Any] = json.load(f)
 
-        self.clk_en_l2_dict = dict()
+        self.clk_en_l2_dict: dict[ChipCoord, list[int]] = dict()
         self.target_chip_list = []
 
         if misc := self.graph_metadata.get("misc"):
-            # If info exists, parse clk_en_L2_dict & target_chip_list
+            # If info exists, parse clk_en_L2 & target_chip_list
             if chip_lst := misc.get("target_chip_list"):
                 self.target_chip_list: list[ChipCoord] = []
                 for c in chip_lst:
@@ -191,10 +191,9 @@ class PAIBoard:
                     else:
                         raise TypeError(f"invalid chip coordinate: {c}")
 
-            if d := misc.get("clk_en_L2_dict"):
-                self.clk_en_l2_dict: dict[ChipCoord, list[int]] = {
-                    coordstr2coord(k): v for k, v in d.items()
-                }
+            if d := misc.get("clk_en_L2"):
+                for k, v in d.items():
+                    self.clk_en_l2_dict[coordstr2coord(k)] = v
 
     def _get_source_chip(self, target_chips: list[ChipCoord]) -> ChipCoord:
         """Get the signal source chip."""
