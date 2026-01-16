@@ -1,0 +1,46 @@
+{
+  "(0,0)": {
+    "(28,28)": {
+      "bit_select": 3,
+      "group_select": 0,
+      "lateral_inhi_value": 1,
+      "weight_decay_value": 0,
+      "upper_weight": 127,
+      "lower_weight": -128,
+      "neuron_start": 0,
+      "neuron_end": 9,
+      "inhi_core_x_star": 0,
+      "inhi_core_y_star": 0,
+      "core_start_time": 1,
+      "core_hold_time": 0,
+      "lut_random_en": 0,
+      "decay_random_en": 0,
+      "leakage_order": 0,
+      "online_mode_en": 1,
+      "test_address": 64,
+      "random_seed": 1,
+      "name": "OnlineCorePlacement_0"
+    },
+    "(28,29)": {
+      "bit_select": 3,
+      "group_select": 0,
+      "lateral_inhi_value": 0,
+      "weight_decay_value": 0,
+      "upper_weight": 127,
+      "lower_weight": -128,
+      "neuron_start": 0,
+      "neuron_end": 9,
+      "inhi_core_x_star": 0,
+      "inhi_core_y_star": 0,
+      "core_start_time": 2,
+      "core_hold_time": 0,
+      "lut_random_en": 0,
+      "decay_random_en": 0,
+      "leakage_order": 0,
+      "online_mode_en": 1,
+      "test_address": 64,
+      "random_seed": 1,
+      "name": "OnlineCorePlacement_1"
+    }
+  }
+}

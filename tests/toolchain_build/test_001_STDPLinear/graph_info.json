@@ -1,0 +1,31 @@
+{
+  "name": "graph_of_STDPLinearNet_0",
+  "inherent_timestep": 2,
+  "output_flow_format": {
+    "STDPLIF_1": {
+      "t_1st_vld": 2,
+      "interval": 1,
+      "n_vld": 0,
+      "is_local_time": false
+    }
+  },
+  "n_core_required": 2,
+  "n_core_occupied": 2,
+  "misc": {
+    "clk_en_L2": {
+      "(0,0)": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "target_chip_list": [
+      0
+    ]
+  }
+}
