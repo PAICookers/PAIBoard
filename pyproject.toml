@@ -47,10 +47,6 @@ packages = [{ include = "paiboard" }]
 [dependency-groups]
 dev = ["pytest>=8.0", "pytest-cov>=7.0", "pytest-md>=0.2"]
 
-[tool.poetry.group.test.dependencies]
-pytest = ">=8.0"
-pytest-cov = ">=7.0"
-pytest-md = ">=0.2"
 
 [project.scripts]
 run-zynq-server = "scripts.run_zynq_server:main"
